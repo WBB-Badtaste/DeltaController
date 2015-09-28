@@ -684,8 +684,8 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentArc(&m_mech, &segArcPars2);
 
 	segLinePars4.plane = ROCKS_PLANE_ZX;
-	segLinePars4.endPos[0] = doorPars.endPos.x;
-	segLinePars4.endPos[1] = doorPars.endPos.z;
+	segLinePars4.endPos[0] = segArcPars2.endPos[0];
+	segLinePars4.endPos[1] = segArcPars2.endPos[1] - doorPars.hight + doorPars.radius;
 	segLinePars4.endVelocity = 0;
 	segLinePars4.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars4);
@@ -729,7 +729,7 @@ NYCE_STATUS RocksHomeDelta(const TRAJ_PARS &trajPars)
 	CARTESIAN_COORD ptpPos;
 	ptpPos.x = cartesianPos[0];
 	ptpPos.y = cartesianPos[1];
-	ptpPos.z = cartesianPos[2];
+	ptpPos.z = cartesianPos[2] - 150;
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(ptpPos, trajPars);
 
 	return nyceStatus;

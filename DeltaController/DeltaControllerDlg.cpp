@@ -93,6 +93,8 @@ BEGIN_MESSAGE_MAP(CDeltaControllerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON13, &CDeltaControllerDlg::OnBnClickedButton13)
 	ON_BN_CLICKED(IDC_BUTTON11, &CDeltaControllerDlg::OnBnClickedButton11)
 	ON_BN_CLICKED(IDC_BUTTON12, &CDeltaControllerDlg::OnBnClickedButton12)
+	ON_BN_CLICKED(IDC_BUTTON1, &CDeltaControllerDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON4, &CDeltaControllerDlg::OnBnClickedButton4)
 END_MESSAGE_MAP()
 
 
@@ -276,13 +278,14 @@ void CDeltaControllerDlg::OnBnClickedButton3()//初始化
 	if (((CButton *)GetDlgItem(IDC_CHECK1))->GetCheck())
 	{
 		nyceStatus = NyceInit(NYCE_SIM);
-
-		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksExExportSplineDatas(TRUE);
 	}
 	else
 	{
 		nyceStatus = NyceInit(NYCE_ETH);
+	}
 
+	if (((CButton *)GetDlgItem(IDC_CHECK2))->GetCheck())
+	{
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksExExportSplineDatas(TRUE);
 	}
 
@@ -364,7 +367,6 @@ void CDeltaControllerDlg::OnBnClickedButton8()//回零位
 }
 
 
-BOOL bOpenBrake = FALSE;
 void CDeltaControllerDlg::OnBnClickedButton2()//刹车控制
 {
 	// TODO: Add your control notification handler code here
@@ -373,7 +375,15 @@ void CDeltaControllerDlg::OnBnClickedButton2()//刹车控制
 	NYCE_DIGITAL_IO_ID io;
 	io.slotId = NYCE_SLOT0;
 
-	if (bOpenBrake)
+	uint32_t ioStatus1(0), ioStatus2(0), ioStatus3(0);
+	io.digIONr = NYCE_DIGOUT0;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus1);
+	io.digIONr = NYCE_DIGOUT1;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus2);
+	io.digIONr = NYCE_DIGOUT2;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus3);
+
+	if (ioStatus1 && ioStatus2 && ioStatus3)
 	{
 		io.digIONr = NYCE_DIGOUT0;
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
@@ -383,8 +393,6 @@ void CDeltaControllerDlg::OnBnClickedButton2()//刹车控制
 
 		io.digIONr = NYCE_DIGOUT2;
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
-
-		bOpenBrake = FALSE;
 	}
 	else
 	{
@@ -396,8 +404,6 @@ void CDeltaControllerDlg::OnBnClickedButton2()//刹车控制
 
 		io.digIONr = NYCE_DIGOUT2;
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
-
-		bOpenBrake = TRUE;
 	}
 
 		StatusHandle(nyceStatus);
@@ -421,9 +427,9 @@ void CDeltaControllerDlg::OnBnClickedButton5()//打开实时位置读取
 	posStr.Format(_T("x:%0.2f y:%0.2f z:%0.2f"), position[0], position[1], position[2]);
 	m_listBox.AddString((LPCTSTR)posStr);
 	m_listBox.AddString("");
+
+	StatusHandle(nyceStatus);
 }
-
-
 
 
 void CDeltaControllerDlg::OnBnClickedButton10()//-1
@@ -553,6 +559,55 @@ void CDeltaControllerDlg::OnBnClickedButton12()//+10
 	trajPars.acceleration = 50 * 100;
 	trajPars.splineTime = 0.01;
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(pos, trajPars, TRUE);
+
+	StatusHandle(nyceStatus);
+}
+
+void CDeltaControllerDlg::OnBnClickedButton1()//控制真空泵
+{
+	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	NYCE_DIGITAL_IO_ID io;
+	io.slotId = NYCE_SLOT0;
+	io.digIONr = NYCE_DIGOUT3;
+
+	uint32_t ioStatus(0);
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus);
+
+	if (ioStatus)
+	{
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+	}
+	else
+	{
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+	}
+
+	StatusHandle(nyceStatus);
+}
+
+
+void CDeltaControllerDlg::OnBnClickedButton4()//控制电磁阀
+{
+	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	NYCE_DIGITAL_IO_ID io;
+	io.slotId = NYCE_SLOT1;
+	io.digIONr = NYCE_DIGOUT2;
+
+	uint32_t ioStatus(0);
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus);
+
+	if (ioStatus)
+	{
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+	}
+	else
+	{
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+	}
 
 	StatusHandle(nyceStatus);
 }
