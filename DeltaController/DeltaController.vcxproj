@@ -51,14 +51,15 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NT;WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Program Files\Rexroth\NYCe4000\dev\inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\OpenGL;C:\Program Files\Rexroth\NYCe4000\dev\inc</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>nhi.lib;sac.lib;nyce.lib;n4krocks.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files\Rexroth\NYCe4000\x86\dev\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glut32.lib;nhi.lib;sac.lib;nyce.lib;n4krocks.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\OpenGL;C:\Program Files\Rexroth\NYCe4000\x86\dev\lib</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -104,13 +105,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AxisControl.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="CoordinateAlgorithm.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="DeltaController.h" />
     <ClInclude Include="DeltaControllerDlg.h" />
     <ClInclude Include="DeltaKinAlgorithm.h" />
+    <ClInclude Include="Drawer.h" />
     <ClInclude Include="NyceExDefs.h" />
     <ClInclude Include="NyceExErrorHandle.h" />
+    <ClInclude Include="Painter.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RocksControl.h" />
     <ClInclude Include="RocksExtern_Delta.h" />
@@ -122,8 +126,11 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DeltaController.cpp" />
     <ClCompile Include="DeltaControllerDlg.cpp" />
+    <ClCompile Include="Drawer.cpp" />
+    <ClCompile Include="Painter.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

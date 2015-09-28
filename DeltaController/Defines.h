@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sacapi.h"
+#include "nhiapi.h"
 
 #define NUM_AXES 3
 const char *axName[ NUM_AXES ] = { "DEF_AXIS_1", "DEF_AXIS_2", "DEF_AXIS_3"};

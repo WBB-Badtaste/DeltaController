@@ -121,5 +121,6 @@ BOOL DeltaCalcVelInverse(const DELTA_MECH_PARS &deltaMechPars, const double* con
 	pJointVel[0] = (pCartesianPos[0] * pCartesianVel[0] + ((pCartesianPos[1] + a) + deltaMechPars.rf * cos_theta1) * pCartesianVel[1] + (pCartesianPos[2] + deltaMechPars.rf * sin_theta1)* pCartesianVel[2]) / (deltaMechPars.rf * ((pCartesianPos[1] + a) * sin_theta1 -pCartesianPos[2] * cos_theta1));
 	pJointVel[1] = ((2.0 * (pCartesianPos[0] + b) - sqrt3 * deltaMechPars.rf * cos_theta2) * pCartesianVel[0] + (2.0 * (pCartesianPos[1] + c) - deltaMechPars.rf * cos_theta2) * pCartesianVel[1] + 2.0 * (pCartesianPos[2] + deltaMechPars.rf * sin_theta2) * pCartesianVel[2]) / (-deltaMechPars.rf * ((sqrt3 * (pCartesianPos[0] + b) + pCartesianPos[1] + c) * sin_theta2 + 2.0 * pCartesianPos[2] * cos_theta2));
 	pJointVel[2] = ((2.0 * (pCartesianPos[0] - b) + sqrt3 * deltaMechPars.rf * cos_theta3) * pCartesianVel[0] + (2.0 * (pCartesianPos[1] + c) - deltaMechPars.rf * cos_theta3) * pCartesianVel[1] + 2.0 * (pCartesianPos[2] + deltaMechPars.rf * sin_theta3) * pCartesianVel[2]) / ( deltaMechPars.rf * ((sqrt3 * (pCartesianPos[0] - b) - pCartesianPos[1] - c) * sin_theta3 - 2.0 * pCartesianPos[2] * cos_theta3));
-	return TRUE; 
+	
+	return TRUE;
 }

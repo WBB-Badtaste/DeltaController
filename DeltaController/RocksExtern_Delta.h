@@ -57,6 +57,8 @@ inline void ConvertPUToAngle(const double &positionUnit, double &angle, const ui
 		angle = 0.0;
 }
 
+//Delta的正向坐标转换
+//pJointPos是PU值
 NYCE_STATUS RocksKinForwardDelta(ROCKS_MECH* pMech, const double pJointPos[], double pMechPos[])
 {
 	if (delta_mech_pars.e <= 0 || delta_mech_pars.f <= 0 || delta_mech_pars.re <= 0 || delta_mech_pars.rf <= 0 )
@@ -79,7 +81,7 @@ NYCE_STATUS RocksKinForwardDelta(ROCKS_MECH* pMech, const double pJointPos[], do
 	if(!DeltaCalcPosForward(delta_mech_pars, jointAnglePos, pMechPos))
 		return ROCKS_ERR_DELTA_JOINT_POS_ERROR;
 
-	return NYCE_OK; 
+	return NYCE_OK;
 }
 
 NYCE_STATUS RocksKinDeltaPosition(ROCKS_MECH* pMech, double pPos[])

@@ -14,6 +14,8 @@
 #include "AxisControl.h"
 #include "RocksControl.h"
 #include "Defines.h"
+#include "NyceExErrorHandle.h"
+#include "Drawer.h"
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -53,6 +55,11 @@ END_MESSAGE_MAP()
 
 CDeltaControllerDlg::CDeltaControllerDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CDeltaControllerDlg::IDD, pParent)
+	, m_motion_par_x(0)
+	, m_motion_par_y(0)
+	, m_motion_par_z(0)
+	, m_motion_par_vel(0)
+	, m_motion_par_direc(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -61,6 +68,12 @@ CDeltaControllerDlg::CDeltaControllerDlg(CWnd* pParent /*=NULL*/)
 void CDeltaControllerDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST1, m_listBox);
+	DDX_Text(pDX, IDC_EDIT1, m_motion_par_x);
+	DDX_Text(pDX, IDC_EDIT2, m_motion_par_y);
+	DDX_Text(pDX, IDC_EDIT3, m_motion_par_z);
+	DDX_Text(pDX, IDC_EDIT4, m_motion_par_vel);
+	DDX_Radio(pDX, IDC_RADIO1, m_motion_par_direc);
 }
 
 
@@ -75,6 +88,11 @@ BEGIN_MESSAGE_MAP(CDeltaControllerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK1, &CDeltaControllerDlg::OnBnClickedCheck1)
 	ON_BN_CLICKED(IDC_BUTTON8, &CDeltaControllerDlg::OnBnClickedButton8)
 	ON_BN_CLICKED(IDC_BUTTON2, &CDeltaControllerDlg::OnBnClickedButton2)
+	ON_BN_CLICKED(IDC_BUTTON5, &CDeltaControllerDlg::OnBnClickedButton5)
+	ON_BN_CLICKED(IDC_BUTTON10, &CDeltaControllerDlg::OnBnClickedButton10)
+	ON_BN_CLICKED(IDC_BUTTON13, &CDeltaControllerDlg::OnBnClickedButton13)
+	ON_BN_CLICKED(IDC_BUTTON11, &CDeltaControllerDlg::OnBnClickedButton11)
+	ON_BN_CLICKED(IDC_BUTTON12, &CDeltaControllerDlg::OnBnClickedButton12)
 END_MESSAGE_MAP()
 
 
@@ -166,39 +184,118 @@ HCURSOR CDeltaControllerDlg::OnQueryDragIcon()
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton6()
+void CDeltaControllerDlg::OnBnClickedButton6()//运动
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	nyceStatus = RocksDoorDelta();
+	UpdateData(TRUE);
+
+	DOOR_TRAJ_PARS doorPars1, doorPars2;
+	doorPars1.startPos.x = -152.5;
+	doorPars1.startPos.y = 0.0;
+	doorPars1.startPos.z = -650.0;
+	doorPars1.endPos.x = 152.5;
+	doorPars1.endPos.y = 0.0;
+	doorPars1.endPos.z = -650.0;
+	doorPars1.hight = 25.0;
+	doorPars1.radius = 8.0;
+	doorPars1.trajPars.velocity = m_motion_par_vel;
+	doorPars1.trajPars.acceleration = doorPars1.trajPars.velocity * 100;
+	doorPars1.trajPars.splineTime = 0.01;
+
+	doorPars2.startPos.x = 152.5;
+	doorPars2.startPos.y = 0.0;
+	doorPars2.startPos.z = -650.0;
+	doorPars2.endPos.x = -152.5;
+	doorPars2.endPos.y = 0.0;
+	doorPars2.endPos.z = -650.0;
+	doorPars2.hight = 25.0;
+	doorPars2.radius = 8.0;
+	doorPars2.trajPars.velocity = m_motion_par_vel;
+	doorPars2.trajPars.acceleration = doorPars2.trajPars.velocity * 100;
+	doorPars2.trajPars.splineTime = 0.01;
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(doorPars1.startPos, doorPars1.trajPars);
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksDoorDelta(doorPars1);
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksDoorDelta(doorPars2);
 
 	StatusHandle(nyceStatus);
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton7()
+void CDeltaControllerDlg::OnBnClickedButton7()//移动到指定点
 {
 	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
 
+	UpdateData(TRUE);
+
+	CARTESIAN_COORD pos;
+	pos.x = m_motion_par_x;
+	pos.y = m_motion_par_y;
+	pos.z = m_motion_par_z;
+
+	TRAJ_PARS trajPars;
+	trajPars.velocity = m_motion_par_vel;
+	trajPars.acceleration = m_motion_par_vel * 100;
+	trajPars.splineTime = 0.01;
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(pos, trajPars);
+
+	StatusHandle(nyceStatus);
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton3()
+HANDLE hThreadReadPos;
+HANDLE hEvReadPos;
+
+
+unsigned __stdcall ThreadReadPosLoop(void* lpParam)
+{
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	double position[3];
+
+	while (WaitForSingleObject(hEvReadPos, INFINITE) == WAIT_OBJECT_0)
+	{
+		
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksReadPosDelta(position);
+
+	}
+	return 0;
+}
+
+void CDeltaControllerDlg::OnBnClickedButton3()//初始化
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
 	if (((CButton *)GetDlgItem(IDC_CHECK1))->GetCheck())
+	{
 		nyceStatus = NyceInit(NYCE_SIM);
+
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksExExportSplineDatas(TRUE);
+	}
 	else
+	{
 		nyceStatus = NyceInit(NYCE_ETH);
 
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiConnect(noName, noId);
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksExExportSplineDatas(TRUE);
+	}
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiConnect(noName[0], &noId[0]);
 
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : InitAxisRexroth(NUM_AXES, axId, axName);
 
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksInitDelta(NUM_AXES, axId);
+
 	StatusHandle(nyceStatus);
+
+// 	uint32_t uThreadReadPos;
+// 	hThreadReadPos = (HANDLE)_beginthreadex(NULL, NULL, ThreadReadPosLoop, NULL, 0,&uThreadReadPos);
 }
 
 
@@ -209,9 +306,11 @@ void CDeltaControllerDlg::OnDestroy()
 	// TODO: Add your message handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	nyceStatus = TermAxis(NUM_AXES, axId);
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksTerm();
 
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiDisconnect(noId);
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : TermAxis(NUM_AXES, axId);
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiDisconnect(noId[0]);
 
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NyceTerm();
 
@@ -232,20 +331,228 @@ void CDeltaControllerDlg::StatusHandle(NYCE_STATUS &nyceStatus)
 	GetSystemTime(&time);
 	CString timeStr("");
 	timeStr.Format(_T("%04u/%02u/%02u %02u:%02u:%02u"), time.wYear, time.wMonth, time.wDay, time.wHour + 8, time.wMinute, time.wSecond);
-	CListBox *pListBox = (CListBox *)GetDlgItem(IDC_LIST1);
-	pListBox->AddString((LPCTSTR)timeStr);
-	pListBox->AddString((LPCTSTR)NyceGetStatusString(nyceStatus));
-	pListBox->AddString("");
+	m_listBox.AddString((LPCTSTR)timeStr);
+	m_listBox.AddString((LPCTSTR)NyceGetStatusStringEx(nyceStatus));
+	m_listBox.AddString("");
 }
 
-void CDeltaControllerDlg::OnBnClickedButton8()
+void CDeltaControllerDlg::OnBnClickedButton8()//回零位
 {
 	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	UpdateData(TRUE);
+	TRAJ_PARS trajPars;
+	trajPars.velocity = m_motion_par_vel;
+	trajPars.acceleration = m_motion_par_vel * 100;
+	trajPars.splineTime = 0.01;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksHomeDelta(trajPars);
+
+// 	CARTESIAN_COORD homePos;
+// 	homePos.x = -65;
+// 	homePos.y = 0;
+// 	homePos.z = -220;
+
+// 	TRAJ_PARS homeTrajPars;
+// 	homeTrajPars.velocity = 100;
+// 	homeTrajPars.acceleration = 1000;
+// 	homeTrajPars.splineTime = 0.001;
+
+// 	NYCE_STATUS nyceStatus(RocksPtpDelta(homePos, homeTrajPars));
+
+	StatusHandle(nyceStatus);
 }
 
 
+BOOL bOpenBrake = FALSE;
 void CDeltaControllerDlg::OnBnClickedButton2()//刹车控制
 {
 	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
 
+	NYCE_DIGITAL_IO_ID io;
+	io.slotId = NYCE_SLOT0;
+
+	if (bOpenBrake)
+	{
+		io.digIONr = NYCE_DIGOUT0;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+
+		io.digIONr = NYCE_DIGOUT1;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+
+		io.digIONr = NYCE_DIGOUT2;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+
+		bOpenBrake = FALSE;
+	}
+	else
+	{
+		io.digIONr = NYCE_DIGOUT0;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+
+		io.digIONr = NYCE_DIGOUT1;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+
+		io.digIONr = NYCE_DIGOUT2;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+
+		bOpenBrake = TRUE;
+	}
+
+		StatusHandle(nyceStatus);
+}
+
+
+void CDeltaControllerDlg::OnBnClickedButton5()//打开实时位置读取
+{
+	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	double position[6];
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksReadPosDelta(position);
+
+	SYSTEMTIME time;
+	GetSystemTime(&time);
+	CString timeStr("");
+	timeStr.Format(_T("%04u/%02u/%02u %02u:%02u:%02u"), time.wYear, time.wMonth, time.wDay, time.wHour + 8, time.wMinute, time.wSecond);
+	m_listBox.AddString((LPCTSTR)timeStr);
+	CString posStr("");
+	posStr.Format(_T("x:%0.2f y:%0.2f z:%0.2f"), position[0], position[1], position[2]);
+	m_listBox.AddString((LPCTSTR)posStr);
+	m_listBox.AddString("");
+}
+
+
+
+
+void CDeltaControllerDlg::OnBnClickedButton10()//-1
+{
+	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	CARTESIAN_COORD pos;
+	pos.x = 0;
+	pos.y = 0;
+	pos.z = 0;
+	UpdateData(TRUE);
+	switch (m_motion_par_direc)
+	{
+	case 0:
+		pos.x = -1;
+		break;
+	case 1:
+		pos.y = -1;
+		break;
+	case 2:
+		pos.z = -1;
+		break;
+	}
+
+	TRAJ_PARS trajPars;
+	trajPars.velocity = 5;
+	trajPars.acceleration = 5 * 100;
+	trajPars.splineTime = 0.01;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(pos, trajPars, TRUE);
+
+	StatusHandle(nyceStatus);
+}
+
+
+void CDeltaControllerDlg::OnBnClickedButton13()//+1
+{
+	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	CARTESIAN_COORD pos;
+	pos.x = 0;
+	pos.y = 0;
+	pos.z = 0;
+	UpdateData(TRUE);
+	switch (m_motion_par_direc)
+	{
+	case 0:
+		pos.x = 1;
+		break;
+	case 1:
+		pos.y = 1;
+		break;
+	case 2:
+		pos.z = 1;
+		break;
+	}
+
+	TRAJ_PARS trajPars;
+	trajPars.velocity = 5;
+	trajPars.acceleration = 5 * 100;
+	trajPars.splineTime = 0.01;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(pos, trajPars, TRUE);
+
+	StatusHandle(nyceStatus);
+}
+
+
+void CDeltaControllerDlg::OnBnClickedButton11()//-10
+{
+	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	CARTESIAN_COORD pos;
+	pos.x = 0;
+	pos.y = 0;
+	pos.z = 0;
+	UpdateData(TRUE);
+	switch (m_motion_par_direc)
+	{
+	case 0:
+		pos.x = -10;
+		break;
+	case 1:
+		pos.y = -10;
+		break;
+	case 2:
+		pos.z = -10;
+		break;
+	}
+
+	TRAJ_PARS trajPars;
+	trajPars.velocity = 50;
+	trajPars.acceleration = 50 * 100;
+	trajPars.splineTime = 0.01;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(pos, trajPars, TRUE);
+
+	StatusHandle(nyceStatus);
+}
+
+
+void CDeltaControllerDlg::OnBnClickedButton12()//+10
+{
+	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	CARTESIAN_COORD pos;
+	pos.x = 0;
+	pos.y = 0;
+	pos.z = 0;
+	UpdateData(TRUE);
+	switch (m_motion_par_direc)
+	{
+	case 0:
+		pos.x = 10;
+		break;
+	case 1:
+		pos.y = 10;
+		break;
+	case 2:
+		pos.z = 10;
+		break;
+	}
+
+	TRAJ_PARS trajPars;
+	trajPars.velocity = 50;
+	trajPars.acceleration = 50 * 100;
+	trajPars.splineTime = 0.01;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(pos, trajPars, TRUE);
+
+	StatusHandle(nyceStatus);
 }

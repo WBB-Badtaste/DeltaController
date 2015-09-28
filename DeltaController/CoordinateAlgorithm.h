@@ -353,12 +353,12 @@ void ConvertPathToWorldCoordinate(const ROCKS_MECH* const pMech, uint32_t &index
 			default:
 				break;
 			}
-			mix_endPos_x = pMech->var.pVelocitySplineBuffer[index];
-			mix_endPos_y = pMech->var.pPositionSplineBuffer[index];
-			mix_endPos_z = pMech->var.pVelocitySplineBuffer[index + 1];
-			mix_pose.r.x = pMech->var.pPositionSplineBuffer[index + 1];
-			mix_pose.r.y = pMech->var.pPositionSplineBuffer[index + 2];
-			mix_pose.r.z = pMech->var.pVelocitySplineBuffer[index + 2];
+			mix_endPos_x  = pMech->var.pVelocitySplineBuffer[index];
+			mix_endPos_y  = pMech->var.pPositionSplineBuffer[index];
+			mix_endPos_z  = pMech->var.pVelocitySplineBuffer[index + 1];
+			mix_pose.r.x  = pMech->var.pPositionSplineBuffer[index + 1];
+			mix_pose.r.y  = pMech->var.pPositionSplineBuffer[index + 2];
+			mix_pose.r.z  = pMech->var.pVelocitySplineBuffer[index + 2];
 			mix_startPos1 = pMech->var.pVelocitySplineBuffer[index + 4];
 			mix_startPos2 = pMech->var.pPositionSplineBuffer[index + 4];
 			switch (mix_moveType)

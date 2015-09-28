@@ -5,6 +5,7 @@
 #pragma once
 
 #include "nyceapi.h"
+#include "afxwin.h"
 
 
 // CDeltaControllerDlg ¶Ô»°¿ò
@@ -43,4 +44,15 @@ private:
 public:
 	afx_msg void OnBnClickedButton8();
 	afx_msg void OnBnClickedButton2();
+	afx_msg void OnBnClickedButton5();
+	CListBox m_listBox;
+	double m_motion_par_x;
+	double m_motion_par_y;
+	double m_motion_par_z;
+	double m_motion_par_vel;
+	int m_motion_par_direc;
+	afx_msg void OnBnClickedButton10();
+	afx_msg void OnBnClickedButton13();
+	afx_msg void OnBnClickedButton11();
+	afx_msg void OnBnClickedButton12();
 };
