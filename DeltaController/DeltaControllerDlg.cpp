@@ -95,6 +95,7 @@ BEGIN_MESSAGE_MAP(CDeltaControllerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON12, &CDeltaControllerDlg::OnBnClickedButton12)
 	ON_BN_CLICKED(IDC_BUTTON1, &CDeltaControllerDlg::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON4, &CDeltaControllerDlg::OnBnClickedButton4)
+	ON_BN_CLICKED(IDC_BUTTON9, &CDeltaControllerDlg::OnBnClickedButton9)
 END_MESSAGE_MAP()
 
 
@@ -406,7 +407,7 @@ void CDeltaControllerDlg::OnBnClickedButton2()//É²³µ¿ØÖÆ
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
 	}
 
-		StatusHandle(nyceStatus);
+	StatusHandle(nyceStatus);
 }
 
 
@@ -442,7 +443,7 @@ void CDeltaControllerDlg::OnBnClickedButton10()//-1
 	pos.y = 0;
 	pos.z = 0;
 	UpdateData(TRUE);
-	switch (m_motion_par_direc)
+	switch (m_motion_par_direc)  
 	{
 	case 0:
 		pos.x = -1;
@@ -576,13 +577,9 @@ void CDeltaControllerDlg::OnBnClickedButton1()//¿ØÖÆÕæ¿Õ±Ã
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus);
 
 	if (ioStatus)
-	{
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
-	}
 	else
-	{
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
-	}
 
 	StatusHandle(nyceStatus);
 }
@@ -601,13 +598,36 @@ void CDeltaControllerDlg::OnBnClickedButton4()//¿ØÖÆµç´Å·§
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus);
 
 	if (ioStatus)
-	{
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
-	}
 	else
-	{
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
-	}
+
+	StatusHandle(nyceStatus);
+}
+
+
+void CDeltaControllerDlg::OnBnClickedButton9()//Ô²ÐÎ¹ì¼£
+{
+	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	CARTESIAN_COORD readyPos;
+	readyPos.x = -100;
+	readyPos.y = 0;
+	readyPos.z = -550;
+
+	TRAJ_PARS trajPars;
+	trajPars.velocity = m_motion_par_vel;
+	trajPars.acceleration = m_motion_par_vel * 100;
+	trajPars.splineTime = 0.005;
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(readyPos, trajPars);
+
+	CARTESIAN_COORD centerOffset;
+	centerOffset.x = 100;
+	centerOffset.y = 0;
+	centerOffset.z = 0;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksCricleDelta(centerOffset, -M_PI * 8, trajPars);
 
 	StatusHandle(nyceStatus);
 }

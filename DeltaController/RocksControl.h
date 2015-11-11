@@ -153,6 +153,8 @@ NYCE_STATUS RocksPtpDelta(const CARTESIAN_COORD &carCoord, const TRAJ_PARS &traj
 	return nyceStatus;
 }
 
+
+//centerOffset是圆形轨迹中心相对起始位置的偏移量
 NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const double &angle, const TRAJ_PARS &trajPars, const double &timeout = SAC_INDEFINITE, const int &repeatTimes = -1)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -215,6 +217,7 @@ NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const double &
 				kinPars.pJointPositionBuffer[ ax ] = NULL;
 				kinPars.pJointVelocityBuffer[ ax ] = NULL;
 			}
+
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinInverseDelta( &m_mech, &kinPars );
 
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStream( &m_mech );
@@ -236,6 +239,7 @@ NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const double &
 				kinPars.pJointPositionBuffer[ ax ] = NULL;
 				kinPars.pJointVelocityBuffer[ ax ] = NULL;
 			}
+
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinInverseDelta( &m_mech, &kinPars );
 
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStream( &m_mech );	
@@ -247,6 +251,8 @@ NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const double &
 		break;
 	}
 	
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinResetOrigin(&m_mech);
+
 	return nyceStatus;
 }
 NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, const double &angle, const TRAJ_PARS &trajPars, const double &timeout = SAC_INDEFINITE, const int &repeatTimes = -1)
@@ -299,6 +305,7 @@ NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, const doub
 
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStreamSynchronize( &m_mech, timeout );
 		break;
+
 	case 0:
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajGetPath( &m_mech, &rocksTrajPath );
 
@@ -311,6 +318,7 @@ NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, const doub
 				kinPars.pJointPositionBuffer[ ax ] = NULL;
 				kinPars.pJointVelocityBuffer[ ax ] = NULL;
 			}
+
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinInverseCartesian( &m_mech, &kinPars );
 
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStream( &m_mech );	
@@ -320,6 +328,7 @@ NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, const doub
 
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajDeletePath( &m_mech, &rocksTrajPath );
 		break;
+
 	default:
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajGetPath( &m_mech, &rocksTrajPath );
 
@@ -332,6 +341,7 @@ NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, const doub
 				kinPars.pJointPositionBuffer[ ax ] = NULL;
 				kinPars.pJointVelocityBuffer[ ax ] = NULL;
 			}
+
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinInverseCartesian( &m_mech, &kinPars );
 
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStream( &m_mech );	
@@ -342,6 +352,9 @@ NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, const doub
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajDeletePath( &m_mech, &rocksTrajPath );
 		break;
 	}
+
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinResetOrigin(&m_mech);
+
 	return nyceStatus;	
 }
 
@@ -461,7 +474,6 @@ const double DOOR_EX_SPEED = 100;
 const double DOOR_EX_ACC = DOOR_SPEED * 100;
 const double SPIRAL_MAX_RADIAL_SPEED = 100;
 const double SPIRAL_MAX_RADIAL_ACC = SPIRAL_MAX_RADIAL_SPEED * 100;
-
 
 ROCKS_TRAJ_SEGMENT_SPIRAL_PARS_EX segSpiralPars1, segSpiralPars2, segSpiralPars3, segSpiralPars4;
 
@@ -711,6 +723,8 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStreamSynchronize( &m_mech, timeout );
 
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinResetOrigin(&m_mech);
+
 	return nyceStatus;
 }
 
@@ -743,3 +757,45 @@ NYCE_STATUS RocksReadPosDelta(double *position)
 
 	return nyceStatus;
 }
+
+
+#include "mmsystem.h"  
+
+double g_beltPos[20], g_beltVel(0.0);
+uint32_t g_beltPos_index(0);
+MMRESULT g_wTimerID(0);
+double g_delayTime(500);
+BOOL g_readingBeltPos(FALSE);
+
+void CALLBACK ReadBeltPosFun(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dwl, DWORD dw2)
+{
+		
+}
+
+NYCE_STATUS RocksReadPosBelt(const uint32_t &axId, double &vel)
+{
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	
+
+	uint32_t wTimerRes = 1;
+	timeBeginPeriod(wTimerRes);
+
+	if (!g_readingBeltPos)
+	{
+		g_wTimerID = timeSetEvent(g_delayTime,  wTimerRes, (LPTIMECALLBACK)ReadBeltPosFun,  (DWORD)this, TIME_PERIODIC);   
+		Sleep(1000);
+	}
+	
+	if(g_wTimerID == 0)
+		return false;
+
+	
+
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : SacReadVariable(axId, SAC_VAR_SETPOINT_POS, &pos2);
+
+	vel = (pos2 - pos1) / time; 
+
+	return nyceStatus;
+}
+
