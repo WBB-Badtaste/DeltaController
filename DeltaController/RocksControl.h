@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Defines.h"
 #include "RocksExtern_Delta.h"
 #include "RocksExtren_Spiral.h"
 
@@ -626,7 +627,7 @@ typedef struct doorTrajPars
 {
 	CARTESIAN_COORD startPos;
 	CARTESIAN_COORD endPos;
-	double hight;
+	double riseHeight;
 	double radius;
 	TRAJ_PARS trajPars;
 }DOOR_TRAJ_PARS;
@@ -639,12 +640,15 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-/*	const double radius(doorPars.trajPars.velocity * doorPars.trajPars.velocity * doorPars.radius);//圆弧半径*/
-	const double distance(sqrt((doorPars.endPos.x - doorPars.startPos.x) * (doorPars.endPos.x - doorPars.startPos.x) + (doorPars.endPos.y - doorPars.startPos.y) * (doorPars.endPos.y - doorPars.startPos.y)));//始末点水平距离
+	//始末点水平距离
+	const double distance(sqrt((doorPars.endPos.x - doorPars.startPos.x) * (doorPars.endPos.x - doorPars.startPos.x) + (doorPars.endPos.y - doorPars.startPos.y) * (doorPars.endPos.y - doorPars.startPos.y)));
 
-	const double velRatio(doorPars.hight / distance * 2);
+	//速度比率
+	const double velRatio1(doorPars.riseHeight / distance * 2);
+	const double velRatio2(-doorPars.endPos.z - doorPars.startPos.z -  doorPars.riseHeight / distance * 2);
 
-	const double angleZ(atan2(doorPars.endPos.y - doorPars.startPos.y, doorPars.endPos.x - doorPars.startPos.x));//始末点连线在水平面的投影方向
+	//始末点连线在水平面的投影方向
+	const double angleZ(atan2(doorPars.endPos.y - doorPars.startPos.y, doorPars.endPos.x - doorPars.startPos.x));
 	
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinDeltaPosition(&m_mech, segStartPars.startPos);
 
@@ -656,8 +660,8 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 
 	segLinePars1.plane = ROCKS_PLANE_ZX;
 	segLinePars1.endPos[0] = doorPars.startPos.x;
-	segLinePars1.endPos[1] = doorPars.startPos.z + doorPars.hight - doorPars.radius;
-	segLinePars1.endVelocity = doorPars.trajPars.velocity * velRatio;
+	segLinePars1.endPos[1] = doorPars.startPos.z + doorPars.riseHeight - doorPars.radius;
+	segLinePars1.endVelocity = doorPars.trajPars.velocity * velRatio1;
 	segLinePars1.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars1);
 
@@ -666,7 +670,7 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	segArcPars1.center[1] = segLinePars1.endPos[1];
 	segArcPars1.endPos[0] = segLinePars1.endPos[0] + doorPars.radius;
 	segArcPars1.endPos[1] = segLinePars1.endPos[1] + doorPars.radius;
-	segArcPars1.endVelocity = doorPars.trajPars.velocity * velRatio;
+	segArcPars1.endVelocity = doorPars.trajPars.velocity * velRatio1;
 	segArcPars1.maxAcceleration = doorPars.trajPars.acceleration;
 	segArcPars1.positiveAngle = TRUE;//注意旋转方向
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentArc(&m_mech, &segArcPars1);
@@ -674,14 +678,14 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	segLinePars2.plane = ROCKS_PLANE_ZX;
 	segLinePars2.endPos[0] = segArcPars1.endPos[0] + distance * 0.5 - doorPars.radius;
 	segLinePars2.endPos[1] = segArcPars1.endPos[1];
-	segLinePars2.endVelocity = doorPars.trajPars.velocity * (1 - velRatio);
+	segLinePars2.endVelocity = doorPars.trajPars.velocity * (1 - velRatio1);
 	segLinePars2.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars2);
 
 	segLinePars3.plane = ROCKS_PLANE_ZX;
 	segLinePars3.endPos[0] = segLinePars2.endPos[0] + distance * 0.5 - doorPars.radius;
 	segLinePars3.endPos[1] = segLinePars2.endPos[1];
-	segLinePars3.endVelocity = doorPars.trajPars.velocity * velRatio;
+	segLinePars3.endVelocity = doorPars.trajPars.velocity * velRatio2;
 	segLinePars3.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars3);
 	
@@ -690,14 +694,14 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	segArcPars2.center[1] = segLinePars3.endPos[1] - doorPars.radius;
 	segArcPars2.endPos[0] = segLinePars3.endPos[0] + doorPars.radius;
 	segArcPars2.endPos[1] = segLinePars3.endPos[1] - doorPars.radius;
-	segArcPars2.endVelocity = doorPars.trajPars.velocity * velRatio;
+	segArcPars2.endVelocity = doorPars.trajPars.velocity * velRatio2;
 	segArcPars2.maxAcceleration = doorPars.trajPars.acceleration;
 	segArcPars2.positiveAngle = TRUE;//注意旋转方向
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentArc(&m_mech, &segArcPars2);
 
 	segLinePars4.plane = ROCKS_PLANE_ZX;
 	segLinePars4.endPos[0] = segArcPars2.endPos[0];
-	segLinePars4.endPos[1] = segArcPars2.endPos[1] - doorPars.hight + doorPars.radius;
+	segLinePars4.endPos[1] = doorPars.endPos.z;
 	segLinePars4.endVelocity = 0;
 	segLinePars4.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars4);
@@ -761,40 +765,47 @@ NYCE_STATUS RocksReadPosDelta(double *position)
 
 #include "mmsystem.h"  
 
-double g_beltPos[20], g_beltVel(0.0);
-uint32_t g_beltPos_index(0);
+
 MMRESULT g_wTimerID(0);
-double g_delayTime(500);
 BOOL g_readingBeltPos(FALSE);
 
 void CALLBACK ReadBeltPosFun(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dwl, DWORD dw2)
 {
-		
+	double pos(0.0);
+
+	//读取传送带编码器值,并存入100位的队列
+	if (NyceSuccess(SacReadVariable(axId[4], SAC_VAR_AXIS_POS, &pos)))
+	{
+		if (g_beltPos_index == NUM_BELTPOS_QUE - 1)
+			for (uint32_t i = 0; i < g_beltPos_index;)
+				g_beltPos[i] = g_beltPos[++i];
+		else
+			++g_beltPos_index;
+
+		g_beltPos[g_beltPos_index] = pos;
+	}
+
+	//计算速度
+	g_beltVel = g_beltPos_index ? (g_beltPos[g_beltPos_index] - g_beltPos[0]) / g_readBeltPos_delayTime * 1000 / g_beltPos_index : 0;
 }
 
 NYCE_STATUS RocksReadPosBelt(const uint32_t &axId, double &vel)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	
-
-	uint32_t wTimerRes = 1;
-	timeBeginPeriod(wTimerRes);
-
 	if (!g_readingBeltPos)
 	{
-		g_wTimerID = timeSetEvent(g_delayTime,  wTimerRes, (LPTIMECALLBACK)ReadBeltPosFun,  (DWORD)this, TIME_PERIODIC);   
+		uint32_t wTimerRes = 1;
+		timeBeginPeriod(wTimerRes);
+
+		g_wTimerID = timeSetEvent(g_readBeltPos_delayTime,  wTimerRes, (LPTIMECALLBACK)ReadBeltPosFun,  NULL, TIME_PERIODIC);   
 		Sleep(1000);
 	}
 	
 	if(g_wTimerID == 0)
 		return false;
 
-	
-
-	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : SacReadVariable(axId, SAC_VAR_SETPOINT_POS, &pos2);
-
-	vel = (pos2 - pos1) / time; 
+	vel = g_beltVel;
 
 	return nyceStatus;
 }

@@ -13,7 +13,6 @@
 
 #include "AxisControl.h"
 #include "RocksControl.h"
-#include "Defines.h"
 #include "NyceExErrorHandle.h"
 #include "Drawer.h"
 
@@ -187,7 +186,9 @@ HCURSOR CDeltaControllerDlg::OnQueryDragIcon()
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton6()//运动
+#define DOOR_HIGHT1 -650
+#define DOOR_HIGHT2 -650
+void CDeltaControllerDlg::OnBnClickedButton6()//门型运动
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -197,11 +198,11 @@ void CDeltaControllerDlg::OnBnClickedButton6()//运动
 	DOOR_TRAJ_PARS doorPars1, doorPars2;
 	doorPars1.startPos.x = -152.5;
 	doorPars1.startPos.y = 0.0;
-	doorPars1.startPos.z = -650.0;
+	doorPars1.startPos.z = DOOR_HIGHT1;
 	doorPars1.endPos.x = 152.5;
 	doorPars1.endPos.y = 0.0;
-	doorPars1.endPos.z = -650.0;
-	doorPars1.hight = 25.0;
+	doorPars1.endPos.z = DOOR_HIGHT2;
+	doorPars1.riseHeight = 25.0;
 	doorPars1.radius = 8.0;
 	doorPars1.trajPars.velocity = m_motion_par_vel;
 	doorPars1.trajPars.acceleration = doorPars1.trajPars.velocity * 100;
@@ -209,11 +210,11 @@ void CDeltaControllerDlg::OnBnClickedButton6()//运动
 
 	doorPars2.startPos.x = 152.5;
 	doorPars2.startPos.y = 0.0;
-	doorPars2.startPos.z = -650.0;
+	doorPars2.startPos.z = DOOR_HIGHT1;
 	doorPars2.endPos.x = -152.5;
 	doorPars2.endPos.y = 0.0;
-	doorPars2.endPos.z = -650.0;
-	doorPars2.hight = 25.0;
+	doorPars2.endPos.z = DOOR_HIGHT2;
+	doorPars2.riseHeight = 25.0 + DOOR_HIGHT1 - DOOR_HIGHT2;
 	doorPars2.radius = 8.0;
 	doorPars2.trajPars.velocity = m_motion_par_vel;
 	doorPars2.trajPars.acceleration = doorPars2.trajPars.velocity * 100;

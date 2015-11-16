@@ -201,9 +201,8 @@ NYCE_STATUS RocksKinInverseDelta(ROCKS_MECH* pMech, const ROCKS_KIN_INV_PARS* pK
 		file<<pMech->var.startPos[0]<<"|"<<pMech->var.startPos[1]<<"|"<<pMech->var.startPos[2]<<endl;
 		file<<"|Index|joint1_pos|joint2_pos|joint3_pos|joint1_vel|joint2_vel|joint3_vel|"<<endl<<"|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|"<<endl;
 		for (uint32_t i = 0; i < realSegNum; ++i)
-		{
 			file<<"|"<<i<<"|"<<pMech->var.pJointPositionBufferC[0][i]<<"|"<<pMech->var.pJointPositionBufferC[1][i]<<"|"<<pMech->var.pJointPositionBufferC[2][i]<<"|"<<pMech->var.pJointVelocityBufferC[0][i]<<"|"<<pMech->var.pJointVelocityBufferC[1][i]<<"|"<<pMech->var.pJointVelocityBufferC[2][i]<<"|"<<endl;
-		}
+		
 		file.close();
 	}
 
@@ -218,7 +217,9 @@ NYCE_STATUS RocksExExportSplineDatas(const BOOL &signal)
 {
 	if (signal && WaitForSingleObject(evExportDatas, 0) != WAIT_OBJECT_0)
 		SetEvent(evExportDatas);
+
 	if (!signal && WaitForSingleObject(evExportDatas, 0) == WAIT_OBJECT_0)
 		ResetEvent(evExportDatas);
+
 	return NYCE_OK;
 }
