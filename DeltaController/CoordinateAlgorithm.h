@@ -2,6 +2,7 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include "CoordinateStructs.h"
 #include "SpaceAlgorithm.h"
 #include "SpiralTrajAlgorithm.h"
 #include "RocksSpiralBufferManager.h"
@@ -447,3 +448,36 @@ void ConvertPathToWorldCoordinate(const ROCKS_MECH* const pMech, uint32_t &index
 	pPosition[1] += pMech->var.refFramePose2.t.y;
 	pPosition[2] += pMech->var.refFramePose2.t.z;
 } 
+
+void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
+{
+	ROCKS_COORD buffer;
+	buffer.type = WORLD_COORD;
+
+	if (origin.type != WORLD_COORD)
+	{
+		double buf(0.0);
+		//Roll
+					 buf =  buffer.postion.y * cos(g_pTransfMatrix[(uint32_t)origin.type].r.x) + buffer.postion.z * sin((uint32_t)g_pTransfMatrix[origin.type].r.x);
+		buffer.postion.z = -buffer.postion.y * sin(g_pTransfMatrix[(uint32_t)origin.type].r.x) + buffer.postion.z * cos((uint32_t)g_pTransfMatrix[origin.type].r.x);
+		buffer.postion.y =  buf;
+
+		//Pitch
+					 buf = buffer.postion.x * cos(g_pTransfMatrix[(uint32_t)origin.type].r.y) - buffer.postion.z * sin((uint32_t)g_pTransfMatrix[origin.type].r.y);
+		buffer.postion.z = buffer.postion.x * sin(g_pTransfMatrix[(uint32_t)origin.type].r.y) + buffer.postion.z * cos((uint32_t)g_pTransfMatrix[origin.type].r.y);
+		buffer.postion.x = buf;
+
+		//Yaw
+					 buf =  buffer.postion.x * cos(g_pTransfMatrix[(uint32_t)origin.type].r.z) + buffer.postion.y * sin((uint32_t)g_pTransfMatrix[origin.type].r.z);
+		buffer.postion.y = -buffer.postion.x * sin(g_pTransfMatrix[(uint32_t)origin.type].r.z) + buffer.postion.y * cos((uint32_t)g_pTransfMatrix[origin.type].r.z);
+		buffer.postion.x =  buf;
+
+		buffer.postion.x += g_pTransfMatrix[(uint32_t)origin.type].t.x;
+		buffer.postion.y += g_pTransfMatrix[(uint32_t)origin.type].t.y;
+		buffer.postion.z += g_pTransfMatrix[(uint32_t)origin.type].t.z;
+
+	}
+	
+
+
+}

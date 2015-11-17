@@ -645,7 +645,7 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 
 	//速度比率
 	const double velRatio1(doorPars.riseHeight / distance * 2);
-	const double velRatio2(-doorPars.endPos.z - doorPars.startPos.z -  doorPars.riseHeight / distance * 2);
+	const double velRatio2((-(doorPars.endPos.z - doorPars.startPos.z) +  doorPars.riseHeight) / distance * 2);
 
 	//始末点连线在水平面的投影方向
 	const double angleZ(atan2(doorPars.endPos.y - doorPars.startPos.y, doorPars.endPos.x - doorPars.startPos.x));
@@ -763,18 +763,12 @@ NYCE_STATUS RocksReadPosDelta(double *position)
 }
 
 
-#include "mmsystem.h"  
-
-
-MMRESULT g_wTimerID(0);
-BOOL g_readingBeltPos(FALSE);
-
 void CALLBACK ReadBeltPosFun(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dwl, DWORD dw2)
 {
 	double pos(0.0);
 
-	//读取传送带编码器值,并存入100位的队列
-	if (NyceSuccess(SacReadVariable(axId[4], SAC_VAR_AXIS_POS, &pos)))
+	//读取传送带编码器值,并存入20位的队列
+	if (NyceSuccess(SacReadVariable(axId[4], SAC_VAR_AXIS_POS, &pos)))//注意传送带的长度有限
 	{
 		if (g_beltPos_index == NUM_BELTPOS_QUE - 1)
 			for (uint32_t i = 0; i < g_beltPos_index;)
@@ -789,10 +783,28 @@ void CALLBACK ReadBeltPosFun(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dwl, D
 	g_beltVel = g_beltPos_index ? (g_beltPos[g_beltPos_index] - g_beltPos[0]) / g_readBeltPos_delayTime * 1000 / g_beltPos_index : 0;
 }
 
-NYCE_STATUS RocksReadPosBelt(const uint32_t &axId, double &vel)
+NYCE_STATUS RocksReadBeltVal(double &vel, double &pos)
+{	
+	if(g_wTimerID == 0)
+		return ROCKS_ERR_READ_BELT_POS_FAIL;
+
+	vel = g_beltVel;
+	pos = g_beltPos[g_beltPos_index];
+
+	return NYCE_OK;
+}
+
+
+NYCE_STATUS	RocksCatchTarget(const TRAJ_PARS &trajPars, const ROCKS_COORD &coord)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
+
+	return nyceStatus;
+}
+
+NYCE_STATUS RocksInitSystem()
+{
 	if (!g_readingBeltPos)
 	{
 		uint32_t wTimerRes = 1;
@@ -801,12 +813,22 @@ NYCE_STATUS RocksReadPosBelt(const uint32_t &axId, double &vel)
 		g_wTimerID = timeSetEvent(g_readBeltPos_delayTime,  wTimerRes, (LPTIMECALLBACK)ReadBeltPosFun,  NULL, TIME_PERIODIC);   
 		Sleep(1000);
 	}
-	
-	if(g_wTimerID == 0)
-		return false;
 
-	vel = g_beltVel;
+	if(g_wTimerID == 0)
+		return ROCKS_ERR_READ_BELT_POS_FAIL;
+
+	g_pTransfMatrix = new TRANSF_MATRIX[NUM_COORD_TYPES]();//注意是否初始化完成
+
+	return NYCE_OK;
+}
+
+NYCE_STATUS RocksTermSystem()
+{
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	timeKillEvent(g_wTimerID);
+
+	delete[] g_pTransfMatrix;
 
 	return nyceStatus;
 }
-

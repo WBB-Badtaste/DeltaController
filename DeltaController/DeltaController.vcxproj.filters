@@ -93,6 +93,9 @@
     <ClInclude Include="Painter.h">
       <Filter>Header Files\OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="CoordinateStructs.h">
+      <Filter>Header Files\RocksEx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeltaController.cpp">
