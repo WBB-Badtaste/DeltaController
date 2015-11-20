@@ -795,10 +795,16 @@ NYCE_STATUS RocksReadBeltVal(double &vel, double &pos)
 }
 
 
-NYCE_STATUS	RocksCatchTarget(const TRAJ_PARS &trajPars, const ROCKS_COORD &coord)
+NYCE_STATUS	RocksCatchTarget(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD &coord)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
+	ROCKS_COORD kinCoord;
+	kinCoord.type = KIN_COORD;
+
+	ConvertTwoCoordinate(coord, kinCoord);
+
+	double time((doorPars.startPos.z - doorPars.endPos.z + doorPars.riseHeight * 2) / doorPars.trajPars.velocity * 2);
 
 	return nyceStatus;
 }
@@ -818,8 +824,8 @@ NYCE_STATUS RocksInitSystem()
 		return ROCKS_ERR_READ_BELT_POS_FAIL;
 
 	g_pTransfMatrix = new TRANSF_MATRIX[NUM_COORD_TYPES]();//注意是否初始化完成
-
-	return NYCE_OK;
+	
+	return NYCE_OK; 
 }
 
 NYCE_STATUS RocksTermSystem()

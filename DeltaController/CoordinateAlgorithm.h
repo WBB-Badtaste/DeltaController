@@ -452,32 +452,69 @@ void ConvertPathToWorldCoordinate(const ROCKS_MECH* const pMech, uint32_t &index
 void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 {
 	ROCKS_COORD buffer;
+	buffer.postion.x = origin.postion.x;
+	buffer.postion.y = origin.postion.y;
+	buffer.postion.z = origin.postion.z;
 	buffer.type = WORLD_COORD;
 
+	//转化为世界坐标系
 	if (origin.type != WORLD_COORD)
 	{
 		double buf(0.0);
+		uint32_t index(origin.type);
+		double angleX(g_pTransfMatrix[index].r.x);
+		double angleY(g_pTransfMatrix[index].r.y);
+		double angleZ(g_pTransfMatrix[index].r.z);
 		//Roll
-					 buf =  buffer.postion.y * cos(g_pTransfMatrix[(uint32_t)origin.type].r.x) + buffer.postion.z * sin((uint32_t)g_pTransfMatrix[origin.type].r.x);
-		buffer.postion.z = -buffer.postion.y * sin(g_pTransfMatrix[(uint32_t)origin.type].r.x) + buffer.postion.z * cos((uint32_t)g_pTransfMatrix[origin.type].r.x);
+					 buf =  buffer.postion.y * cos(angleX) + buffer.postion.z * sin(angleX);
+		buffer.postion.z = -buffer.postion.y * sin(angleX) + buffer.postion.z * cos(angleX);
 		buffer.postion.y =  buf;
 
 		//Pitch
-					 buf = buffer.postion.x * cos(g_pTransfMatrix[(uint32_t)origin.type].r.y) - buffer.postion.z * sin((uint32_t)g_pTransfMatrix[origin.type].r.y);
-		buffer.postion.z = buffer.postion.x * sin(g_pTransfMatrix[(uint32_t)origin.type].r.y) + buffer.postion.z * cos((uint32_t)g_pTransfMatrix[origin.type].r.y);
+					 buf = buffer.postion.x * cos(angleY) - buffer.postion.z * sin(angleY);
+		buffer.postion.z = buffer.postion.x * sin(angleY) + buffer.postion.z * cos(angleY);
 		buffer.postion.x = buf;
 
 		//Yaw
-					 buf =  buffer.postion.x * cos(g_pTransfMatrix[(uint32_t)origin.type].r.z) + buffer.postion.y * sin((uint32_t)g_pTransfMatrix[origin.type].r.z);
-		buffer.postion.y = -buffer.postion.x * sin(g_pTransfMatrix[(uint32_t)origin.type].r.z) + buffer.postion.y * cos((uint32_t)g_pTransfMatrix[origin.type].r.z);
+					 buf =  buffer.postion.x * cos(angleZ) + buffer.postion.y * sin(angleZ);
+		buffer.postion.y = -buffer.postion.x * sin(angleZ) + buffer.postion.y * cos(angleZ);
 		buffer.postion.x =  buf;
 
-		buffer.postion.x += g_pTransfMatrix[(uint32_t)origin.type].t.x;
-		buffer.postion.y += g_pTransfMatrix[(uint32_t)origin.type].t.y;
-		buffer.postion.z += g_pTransfMatrix[(uint32_t)origin.type].t.z;
-
+		buffer.postion.x += g_pTransfMatrix[index].t.x;
+		buffer.postion.y += g_pTransfMatrix[index].t.y;
+		buffer.postion.z += g_pTransfMatrix[index].t.z;
 	}
-	
 
+	target.postion.x = buffer.postion.x;
+	target.postion.y = buffer.postion.y;
+	target.postion.z = buffer.postion.z;
 
+	//转化为目标坐标系
+	if (target.type != WORLD_COORD)
+	{
+		double buf(0.0);
+		uint32_t index(target.type);
+		double angleX(-g_pTransfMatrix[index].r.x);
+		double angleY(-g_pTransfMatrix[index].r.y);
+		double angleZ(-g_pTransfMatrix[index].r.z);
+
+		target.postion.x -= g_pTransfMatrix[index].t.x;
+		target.postion.y -= g_pTransfMatrix[index].t.y;
+		target.postion.z -= g_pTransfMatrix[index].t.z;
+
+		//Yaw
+					 buf =  target.postion.x * cos(angleZ) + target.postion.y * sin(angleZ);
+		target.postion.y = -target.postion.x * sin(angleZ) + target.postion.y * cos(angleZ);
+		target.postion.x =  buf;
+
+		//Pitch
+					 buf = target.postion.x * cos(angleY) - target.postion.z * sin(angleY);
+		target.postion.z = target.postion.x * sin(angleY) + target.postion.z * cos(angleY);
+		target.postion.x = buf;
+
+		//Roll
+					 buf =  target.postion.y * cos(angleX) + target.postion.z * sin(angleX);
+		target.postion.z = -target.postion.y * sin(angleX) + target.postion.z * cos(angleX);
+		target.postion.y =  buf;
+	}
 }

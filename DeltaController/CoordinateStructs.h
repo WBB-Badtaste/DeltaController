@@ -1,6 +1,8 @@
-//坐标系类型
-#define NUM_COORD_TYPES 6
+#pragma once
 
+const uint32_t NUM_COORD_TYPES(6);
+
+//坐标系类型
 typedef enum CoordType
 {
 	WORLD_COORD		= NUM_COORD_TYPES - 6,

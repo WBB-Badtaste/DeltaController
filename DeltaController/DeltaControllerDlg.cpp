@@ -614,7 +614,7 @@ void CDeltaControllerDlg::OnBnClickedButton9()//Բ�ι켣
 
 	CARTESIAN_COORD readyPos;
 	readyPos.x = -100;
-	readyPos.y = 0;
+	readyPos.y = 0; 
 	readyPos.z = -550;
 
 	TRAJ_PARS trajPars;
@@ -626,7 +626,7 @@ void CDeltaControllerDlg::OnBnClickedButton9()//Բ�ι켣
 
 	CARTESIAN_COORD centerOffset;
 	centerOffset.x = 100;
-	centerOffset.y = 0;
+	centerOffset.y = 0;8
 	centerOffset.z = 0;
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksCricleDelta(centerOffset, -M_PI * 8, trajPars);
 
