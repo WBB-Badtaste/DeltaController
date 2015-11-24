@@ -27,3 +27,7 @@ BOOL g_readingBeltPos(FALSE);
 
 //坐标系相关
 TRANSF_MATRIX *g_pTransfMatrix;
+
+//特殊坐标 
+ROCKS_COORD homePos;
+BOOL bInitHomePos;

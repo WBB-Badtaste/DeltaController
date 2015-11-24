@@ -80,21 +80,21 @@ BEGIN_MESSAGE_MAP(CDeltaControllerDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_BUTTON6, &CDeltaControllerDlg::OnBnClickedButton6)
-	ON_BN_CLICKED(IDC_BUTTON7, &CDeltaControllerDlg::OnBnClickedButton7)
-	ON_BN_CLICKED(IDC_BUTTON3, &CDeltaControllerDlg::OnBnClickedButton3)
+	ON_BN_CLICKED(IDC_BUTTON6, &CDeltaControllerDlg::OnBnClickedDoor)
+	ON_BN_CLICKED(IDC_BUTTON7, &CDeltaControllerDlg::OnBnClickedPtp)
+	ON_BN_CLICKED(IDC_BUTTON3, &CDeltaControllerDlg::OnBnClickedInit)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_CHECK1, &CDeltaControllerDlg::OnBnClickedCheck1)
-	ON_BN_CLICKED(IDC_BUTTON8, &CDeltaControllerDlg::OnBnClickedButton8)
-	ON_BN_CLICKED(IDC_BUTTON2, &CDeltaControllerDlg::OnBnClickedButton2)
-	ON_BN_CLICKED(IDC_BUTTON5, &CDeltaControllerDlg::OnBnClickedButton5)
+	ON_BN_CLICKED(IDC_BUTTON8, &CDeltaControllerDlg::OnBnClickedHome)
+	ON_BN_CLICKED(IDC_BUTTON2, &CDeltaControllerDlg::OnBnClickedBrake)
+	ON_BN_CLICKED(IDC_BUTTON5, &CDeltaControllerDlg::OnBnClickedShowPos)
 	ON_BN_CLICKED(IDC_BUTTON10, &CDeltaControllerDlg::OnBnClickedButton10)
-	ON_BN_CLICKED(IDC_BUTTON13, &CDeltaControllerDlg::OnBnClickedButton13)
+	ON_BN_CLICKED(IDC_BUTTON13, &CDeltaControllerDlg::OnBnClickedMove1)
 	ON_BN_CLICKED(IDC_BUTTON11, &CDeltaControllerDlg::OnBnClickedButton11)
-	ON_BN_CLICKED(IDC_BUTTON12, &CDeltaControllerDlg::OnBnClickedButton12)
-	ON_BN_CLICKED(IDC_BUTTON1, &CDeltaControllerDlg::OnBnClickedButton1)
-	ON_BN_CLICKED(IDC_BUTTON4, &CDeltaControllerDlg::OnBnClickedButton4)
-	ON_BN_CLICKED(IDC_BUTTON9, &CDeltaControllerDlg::OnBnClickedButton9)
+	ON_BN_CLICKED(IDC_BUTTON12, &CDeltaControllerDlg::OnBnClickedMove10)
+	ON_BN_CLICKED(IDC_BUTTON1, &CDeltaControllerDlg::OnBnClickedPump)
+	ON_BN_CLICKED(IDC_BUTTON4, &CDeltaControllerDlg::OnBnClickedSwitch)
+	ON_BN_CLICKED(IDC_BUTTON9, &CDeltaControllerDlg::OnBnClickedCirlce)
 END_MESSAGE_MAP()
 
 
@@ -188,7 +188,7 @@ HCURSOR CDeltaControllerDlg::OnQueryDragIcon()
 
 #define DOOR_HIGHT1 -650
 #define DOOR_HIGHT2 -650
-void CDeltaControllerDlg::OnBnClickedButton6()//门型运动
+void CDeltaControllerDlg::OnBnClickedDoor()//门型运动
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -196,29 +196,30 @@ void CDeltaControllerDlg::OnBnClickedButton6()//门型运动
 	UpdateData(TRUE);
 
 	DOOR_TRAJ_PARS doorPars1, doorPars2;
-	doorPars1.startPos.x = -152.5;
-	doorPars1.startPos.y = 0.0;
-	doorPars1.startPos.z = DOOR_HIGHT1;
-	doorPars1.endPos.x = 152.5;
-	doorPars1.endPos.y = 0.0;
-	doorPars1.endPos.z = DOOR_HIGHT2;
+	doorPars1.startPos.position.x = -152.5;
+	doorPars1.startPos.position.y = 0.0;
+	doorPars1.startPos.position.z = DOOR_HIGHT1;
+	doorPars1.endPos.position.x = 152.5;
+	doorPars1.endPos.position.y = 0.0;
+	doorPars1.endPos.position.z = DOOR_HIGHT2;
 	doorPars1.riseHeight = 25.0;
 	doorPars1.radius = 8.0;
 	doorPars1.trajPars.velocity = m_motion_par_vel;
 	doorPars1.trajPars.acceleration = doorPars1.trajPars.velocity * 100;
 	doorPars1.trajPars.splineTime = 0.01;
 
-	doorPars2.startPos.x = 152.5;
-	doorPars2.startPos.y = 0.0;
-	doorPars2.startPos.z = DOOR_HIGHT1;
-	doorPars2.endPos.x = -152.5;
-	doorPars2.endPos.y = 0.0;
-	doorPars2.endPos.z = DOOR_HIGHT2;
+	doorPars2.startPos.position.x = 152.5;
+	doorPars2.startPos.position.y = 0.0;
+	doorPars2.startPos.position.z = DOOR_HIGHT1;
+	doorPars2.endPos.position.x = -152.5;
+	doorPars2.endPos.position.y = 0.0;
+	doorPars2.endPos.position.z = DOOR_HIGHT2;
 	doorPars2.riseHeight = 25.0 + DOOR_HIGHT1 - DOOR_HIGHT2;
 	doorPars2.radius = 8.0;
 	doorPars2.trajPars.velocity = m_motion_par_vel;
 	doorPars2.trajPars.acceleration = doorPars2.trajPars.velocity * 100;
 	doorPars2.trajPars.splineTime = 0.01;
+
 
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(doorPars1.startPos, doorPars1.trajPars);
 
@@ -230,17 +231,18 @@ void CDeltaControllerDlg::OnBnClickedButton6()//门型运动
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton7()//移动到指定点
+void CDeltaControllerDlg::OnBnClickedPtp()//移动到指定点
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
 	UpdateData(TRUE);
 
-	CARTESIAN_COORD pos;
-	pos.x = m_motion_par_x;
-	pos.y = m_motion_par_y;
-	pos.z = m_motion_par_z;
+	ROCKS_COORD pos;
+	pos.type = KIN_COORD;
+	pos.position.x = m_motion_par_x;
+	pos.position.y = m_motion_par_y;
+	pos.position.z = m_motion_par_z;
 
 	TRAJ_PARS trajPars;
 	trajPars.velocity = m_motion_par_vel;
@@ -272,7 +274,7 @@ unsigned __stdcall ThreadReadPosLoop(void* lpParam)
 	return 0;
 }
 
-void CDeltaControllerDlg::OnBnClickedButton3()//初始化
+void CDeltaControllerDlg::OnBnClickedInit()//初始化
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -341,7 +343,7 @@ void CDeltaControllerDlg::StatusHandle(NYCE_STATUS &nyceStatus)
 	m_listBox.AddString("");
 }
 
-void CDeltaControllerDlg::OnBnClickedButton8()//回零位
+void CDeltaControllerDlg::OnBnClickedHome()//回零位
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -369,7 +371,7 @@ void CDeltaControllerDlg::OnBnClickedButton8()//回零位
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton2()//刹车控制
+void CDeltaControllerDlg::OnBnClickedBrake()//刹车控制
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -412,7 +414,7 @@ void CDeltaControllerDlg::OnBnClickedButton2()//刹车控制
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton5()//打开实时位置读取
+void CDeltaControllerDlg::OnBnClickedShowPos()//打开实时位置读取
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -439,21 +441,22 @@ void CDeltaControllerDlg::OnBnClickedButton10()//-1
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	CARTESIAN_COORD pos;
-	pos.x = 0;
-	pos.y = 0;
-	pos.z = 0;
+	ROCKS_COORD pos;
+	pos.type = KIN_COORD;
+	pos.position.x = 0;
+	pos.position.y = 0;
+	pos.position.z = 0;
 	UpdateData(TRUE);
 	switch (m_motion_par_direc)  
 	{
 	case 0:
-		pos.x = -1;
+		pos.position.x = -1;
 		break;
 	case 1:
-		pos.y = -1;
+		pos.position.y = -1;
 		break;
 	case 2:
-		pos.z = -1;
+		pos.position.z = -1;
 		break;
 	}
 
@@ -467,26 +470,27 @@ void CDeltaControllerDlg::OnBnClickedButton10()//-1
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton13()//+1
+void CDeltaControllerDlg::OnBnClickedMove1()//+1
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	CARTESIAN_COORD pos;
-	pos.x = 0;
-	pos.y = 0;
-	pos.z = 0;
+	ROCKS_COORD pos;
+	pos.type = KIN_COORD;
+	pos.position.x = 0;
+	pos.position.y = 0;
+	pos.position.z = 0;
 	UpdateData(TRUE);
 	switch (m_motion_par_direc)
 	{
 	case 0:
-		pos.x = 1;
+		pos.position.x = 1;
 		break;
 	case 1:
-		pos.y = 1;
+		pos.position.y = 1;
 		break;
 	case 2:
-		pos.z = 1;
+		pos.position.z = 1;
 		break;
 	}
 
@@ -505,21 +509,22 @@ void CDeltaControllerDlg::OnBnClickedButton11()//-10
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	CARTESIAN_COORD pos;
-	pos.x = 0;
-	pos.y = 0;
-	pos.z = 0;
+	ROCKS_COORD pos;
+	pos.type = KIN_COORD;
+	pos.position.x = 0;
+	pos.position.y = 0;
+	pos.position.z = 0;
 	UpdateData(TRUE);
 	switch (m_motion_par_direc)
 	{
 	case 0:
-		pos.x = -10;
+		pos.position.x = -10;
 		break;
 	case 1:
-		pos.y = -10;
+		pos.position.y = -10;
 		break;
 	case 2:
-		pos.z = -10;
+		pos.position.z = -10;
 		break;
 	}
 
@@ -533,26 +538,27 @@ void CDeltaControllerDlg::OnBnClickedButton11()//-10
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton12()//+10
+void CDeltaControllerDlg::OnBnClickedMove10()//+10
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	CARTESIAN_COORD pos;
-	pos.x = 0;
-	pos.y = 0;
-	pos.z = 0;
+	ROCKS_COORD pos;
+	pos.type = KIN_COORD;
+	pos.position.x = 0;
+	pos.position.y = 0;
+	pos.position.z = 0;
 	UpdateData(TRUE);
 	switch (m_motion_par_direc)
 	{
 	case 0:
-		pos.x = 10;
+		pos.position.x = 10;
 		break;
 	case 1:
-		pos.y = 10;
+		pos.position.y = 10;
 		break;
 	case 2:
-		pos.z = 10;
+		pos.position.z = 10;
 		break;
 	}
 
@@ -565,7 +571,7 @@ void CDeltaControllerDlg::OnBnClickedButton12()//+10
 	StatusHandle(nyceStatus);
 }
 
-void CDeltaControllerDlg::OnBnClickedButton1()//控制真空泵
+void CDeltaControllerDlg::OnBnClickedPump()//控制真空泵
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -586,7 +592,7 @@ void CDeltaControllerDlg::OnBnClickedButton1()//控制真空泵
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton4()//控制电磁阀
+void CDeltaControllerDlg::OnBnClickedSwitch()//控制电磁阀
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -607,15 +613,16 @@ void CDeltaControllerDlg::OnBnClickedButton4()//控制电磁阀
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButton9()//圆形轨迹
+void CDeltaControllerDlg::OnBnClickedCirlce()//圆形轨迹
 {
 	// TODO: Add your control notification handler code here
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	CARTESIAN_COORD readyPos;
-	readyPos.x = -100;
-	readyPos.y = 0; 
-	readyPos.z = -550;
+	ROCKS_COORD readyPos;
+	readyPos.type = KIN_COORD;
+	readyPos.position.x = -100;
+	readyPos.position.y = 0; 
+	readyPos.position.z = -550;
 
 	TRAJ_PARS trajPars;
 	trajPars.velocity = m_motion_par_vel;
@@ -626,7 +633,7 @@ void CDeltaControllerDlg::OnBnClickedButton9()//圆形轨迹
 
 	CARTESIAN_COORD centerOffset;
 	centerOffset.x = 100;
-	centerOffset.y = 0;8
+	centerOffset.y = 0;
 	centerOffset.z = 0;
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksCricleDelta(centerOffset, -M_PI * 8, trajPars);
 

@@ -108,25 +108,29 @@ NYCE_STATUS RocksTerm()
 	return nyceStatus;
 }
 
-NYCE_STATUS RocksPtpDelta(const CARTESIAN_COORD &carCoord, const TRAJ_PARS &trajPars, BOOL bRelative = FALSE, const double timeout = SAC_INDEFINITE)
+NYCE_STATUS RocksPtpDelta(const ROCKS_COORD &rocksCoord, const TRAJ_PARS &trajPars, BOOL bRelative = FALSE, const double timeout = SAC_INDEFINITE)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
 	ROCKS_TRAJ_SINE_ACC_PTP_PARS sinePtpPars;
 	ROCKS_KIN_INV_PARS kinPars;
 
+	ROCKS_COORD kinCoord;
+	kinCoord.type = KIN_COORD;
+	ConvertTwoCoordinate(rocksCoord, kinCoord);
+
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinDeltaPosition(&m_mech, sinePtpPars.startPos);
 	if (bRelative)
 	{
-		sinePtpPars.endPos[0] = sinePtpPars.startPos[0] + carCoord.x;
-		sinePtpPars.endPos[1] = sinePtpPars.startPos[1] + carCoord.y;
-		sinePtpPars.endPos[2] = sinePtpPars.startPos[2] + carCoord.z;
+		sinePtpPars.endPos[0] = sinePtpPars.startPos[0] + kinCoord.position.x;
+		sinePtpPars.endPos[1] = sinePtpPars.startPos[1] + kinCoord.position.y;
+		sinePtpPars.endPos[2] = sinePtpPars.startPos[2] + kinCoord.position.z;
 	}
 	else
 	{
-		sinePtpPars.endPos[0] = carCoord.x;
-		sinePtpPars.endPos[1] = carCoord.y;
-		sinePtpPars.endPos[2] = carCoord.z;
+		sinePtpPars.endPos[0] = kinCoord.position.x;
+		sinePtpPars.endPos[1] = kinCoord.position.y;
+		sinePtpPars.endPos[2] = kinCoord.position.z;
 	}
 	
 	sinePtpPars.maxVelocity = trajPars.velocity;
@@ -625,8 +629,8 @@ NYCE_STATUS RocksSpiralExDoorDelta()
 
 typedef struct doorTrajPars
 {
-	CARTESIAN_COORD startPos;
-	CARTESIAN_COORD endPos;
+	ROCKS_COORD startPos;
+	ROCKS_COORD endPos;
 	double riseHeight;
 	double radius;
 	TRAJ_PARS trajPars;
@@ -641,14 +645,14 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
 	//始末点水平距离
-	const double distance(sqrt((doorPars.endPos.x - doorPars.startPos.x) * (doorPars.endPos.x - doorPars.startPos.x) + (doorPars.endPos.y - doorPars.startPos.y) * (doorPars.endPos.y - doorPars.startPos.y)));
+	const double distance(sqrt((doorPars.endPos.position.x - doorPars.startPos.position.x) * (doorPars.endPos.position.x - doorPars.startPos.position.x) + (doorPars.endPos.position.y - doorPars.startPos.position.y) * (doorPars.endPos.position.y - doorPars.startPos.position.y)));
 
 	//速度比率
 	const double velRatio1(doorPars.riseHeight / distance * 2);
-	const double velRatio2((-(doorPars.endPos.z - doorPars.startPos.z) +  doorPars.riseHeight) / distance * 2);
+	const double velRatio2((-(doorPars.endPos.position.z - doorPars.startPos.position.z) +  doorPars.riseHeight) / distance * 2);
 
 	//始末点连线在水平面的投影方向
-	const double angleZ(atan2(doorPars.endPos.y - doorPars.startPos.y, doorPars.endPos.x - doorPars.startPos.x));
+	const double angleZ(atan2(doorPars.endPos.position.y - doorPars.startPos.position.y, doorPars.endPos.position.x - doorPars.startPos.position.x));
 	
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinDeltaPosition(&m_mech, segStartPars.startPos);
 
@@ -659,8 +663,8 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentStart(&m_mech, &segStartPars);
 
 	segLinePars1.plane = ROCKS_PLANE_ZX;
-	segLinePars1.endPos[0] = doorPars.startPos.x;
-	segLinePars1.endPos[1] = doorPars.startPos.z + doorPars.riseHeight - doorPars.radius;
+	segLinePars1.endPos[0] = doorPars.startPos.position.x;
+	segLinePars1.endPos[1] = doorPars.startPos.position.z + doorPars.riseHeight - doorPars.radius;
 	segLinePars1.endVelocity = doorPars.trajPars.velocity * velRatio1;
 	segLinePars1.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars1);
@@ -701,7 +705,7 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 
 	segLinePars4.plane = ROCKS_PLANE_ZX;
 	segLinePars4.endPos[0] = segArcPars2.endPos[0];
-	segLinePars4.endPos[1] = doorPars.endPos.z;
+	segLinePars4.endPos[1] = doorPars.endPos.position.z;
 	segLinePars4.endVelocity = 0;
 	segLinePars4.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars4);
@@ -732,6 +736,15 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	return nyceStatus;
 }
 
+NYCE_STATUS RocksSetHomePos(const ROCKS_COORD &rocksCoord)
+{
+	bInitHomePos = TRUE;
+	homePos.type = KIN_COORD;
+	ConvertTwoCoordinate(rocksCoord, homePos);
+
+	return NYCE_OK;
+}
+
 NYCE_STATUS RocksHomeDelta(const TRAJ_PARS &trajPars)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -741,15 +754,22 @@ NYCE_STATUS RocksHomeDelta(const TRAJ_PARS &trajPars)
 	joinPos[1] = 0.0;
 	joinPos[2] = 0.0;
 
-	double cartesianPos[3];
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksKinForwardDelta(&m_mech, joinPos, cartesianPos);
+	if (!bInitHomePos)
+	{
+		double cartesianPos[3];
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksKinForwardDelta(&m_mech, joinPos, cartesianPos);
 
-	CARTESIAN_COORD ptpPos;
-	ptpPos.x = cartesianPos[0];
-	ptpPos.y = cartesianPos[1];
-	ptpPos.z = cartesianPos[2] - 150;
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(ptpPos, trajPars);
+		ROCKS_COORD ptpPos;
+		ptpPos.position.x = cartesianPos[0];
+		ptpPos.position.y = cartesianPos[1];
+		ptpPos.position.z = cartesianPos[2] - 150;
+		ptpPos.type = KIN_COORD;
 
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetHomePos(ptpPos);
+	}
+	
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(homePos, trajPars);
+	
 	return nyceStatus;
 }
 
@@ -783,7 +803,7 @@ void CALLBACK ReadBeltPosFun(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dwl, D
 	g_beltVel = g_beltPos_index ? (g_beltPos[g_beltPos_index] - g_beltPos[0]) / g_readBeltPos_delayTime * 1000 / g_beltPos_index : 0;
 }
 
-NYCE_STATUS RocksReadBeltVal(double &vel, double &pos)
+NYCE_STATUS RocksReadBeltEncoderVal(double &vel, double &pos)//
 {	
 	if(g_wTimerID == 0)
 		return ROCKS_ERR_READ_BELT_POS_FAIL;
@@ -794,7 +814,6 @@ NYCE_STATUS RocksReadBeltVal(double &vel, double &pos)
 	return NYCE_OK;
 }
 
-
 NYCE_STATUS	RocksCatchTarget(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD &coord)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -804,7 +823,7 @@ NYCE_STATUS	RocksCatchTarget(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD &
 
 	ConvertTwoCoordinate(coord, kinCoord);
 
-	double time((doorPars.startPos.z - doorPars.endPos.z + doorPars.riseHeight * 2) / doorPars.trajPars.velocity * 2);
+	double time((doorPars.startPos.position.z - doorPars.endPos.position.z + doorPars.riseHeight * 2) / doorPars.trajPars.velocity * 2);
 
 	return nyceStatus;
 }
@@ -825,7 +844,7 @@ NYCE_STATUS RocksInitSystem()
 
 	g_pTransfMatrix = new TRANSF_MATRIX[NUM_COORD_TYPES]();//注意是否初始化完成
 	
-	return NYCE_OK; 
+	return NYCE_OK;
 }
 
 NYCE_STATUS RocksTermSystem()
@@ -835,6 +854,17 @@ NYCE_STATUS RocksTermSystem()
 	timeKillEvent(g_wTimerID);
 
 	delete[] g_pTransfMatrix;
+
+	return nyceStatus;
+}
+
+NYCE_STATUS RocksCalcCatchPos(ROCKS_COORD &position)
+{
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	double vel, pos;
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksReadBeltEncoderVal(vel, pos);
+
 
 	return nyceStatus;
 }
