@@ -465,24 +465,36 @@ void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 		double angleX(g_pTransfMatrix[index].r.x);
 		double angleY(g_pTransfMatrix[index].r.y);
 		double angleZ(g_pTransfMatrix[index].r.z);
-		//Roll
-					 buf =  buffer.position.y * cos(angleX) + buffer.position.z * sin(angleX);
-		buffer.position.z = -buffer.position.y * sin(angleX) + buffer.position.z * cos(angleX);
-		buffer.position.y =  buf;
 
-		//Pitch
-					 buf = buffer.position.x * cos(angleY) - buffer.position.z * sin(angleY);
-		buffer.position.z = buffer.position.x * sin(angleY) + buffer.position.z * cos(angleY);
-		buffer.position.x = buf;
+		if (origin.type == BELT_COORD)
+		{
+			if (origin.cuEncoderValue < g_pTransfMatrix[BELT_COORD].encoderMinRange || origin.cuEncoderValue > g_pTransfMatrix[BELT_COORD].encoderMaxRange)
+			{
+				buffer.position.x = -999999;
+				buffer.position.y = -999999;
+				buffer.position.z = -999999;
+			}
+			else
+				buffer.position.x += (origin.cuEncoderValue - g_pTransfMatrix[BELT_COORD].encoderMinRange) / (g_pTransfMatrix[BELT_COORD].encoderMaxRange - g_pTransfMatrix[BELT_COORD].encoderMinRange) * g_pTransfMatrix[BELT_COORD].beltLenght;
+		}
+			//Roll
+			buf =  buffer.position.y * cos(angleX) + buffer.position.z * sin(angleX);
+			buffer.position.z = -buffer.position.y * sin(angleX) + buffer.position.z * cos(angleX);
+			buffer.position.y =  buf;
 
-		//Yaw
-					 buf =  buffer.position.x * cos(angleZ) + buffer.position.y * sin(angleZ);
-		buffer.position.y = -buffer.position.x * sin(angleZ) + buffer.position.y * cos(angleZ);
-		buffer.position.x =  buf;
+			//Pitch
+			buf = buffer.position.x * cos(angleY) - buffer.position.z * sin(angleY);
+			buffer.position.z = buffer.position.x * sin(angleY) + buffer.position.z * cos(angleY);
+			buffer.position.x = buf;
 
-		buffer.position.x += g_pTransfMatrix[index].t.x;
-		buffer.position.y += g_pTransfMatrix[index].t.y;
-		buffer.position.z += g_pTransfMatrix[index].t.z;
+			//Yaw
+			buf =  buffer.position.x * cos(angleZ) + buffer.position.y * sin(angleZ);
+			buffer.position.y = -buffer.position.x * sin(angleZ) + buffer.position.y * cos(angleZ);
+			buffer.position.x =  buf;
+
+			buffer.position.x += g_pTransfMatrix[index].t.x;
+			buffer.position.y += g_pTransfMatrix[index].t.y;
+			buffer.position.z += g_pTransfMatrix[index].t.z;
 	}
 
 	target.position.x = buffer.position.x;
@@ -503,29 +515,42 @@ void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 		target.position.z -= g_pTransfMatrix[index].t.z;
 
 		//Yaw
-					 buf =  target.position.x * cos(angleZ) + target.position.y * sin(angleZ);
+					  buf =  target.position.x * cos(angleZ) + target.position.y * sin(angleZ);
 		target.position.y = -target.position.x * sin(angleZ) + target.position.y * cos(angleZ);
 		target.position.x =  buf;
 
 		//Pitch
-					 buf = target.position.x * cos(angleY) - target.position.z * sin(angleY);
+					  buf = target.position.x * cos(angleY) - target.position.z * sin(angleY);
 		target.position.z = target.position.x * sin(angleY) + target.position.z * cos(angleY);
 		target.position.x = buf;
 
 		//Roll
-					 buf =  target.position.y * cos(angleX) + target.position.z * sin(angleX);
+					  buf =  target.position.y * cos(angleX) + target.position.z * sin(angleX);
 		target.position.z = -target.position.y * sin(angleX) + target.position.z * cos(angleX);
 		target.position.y =  buf;
+
+		if (origin.type == BELT_COORD)
+		{
+			if (origin.cuEncoderValue < g_pTransfMatrix[BELT_COORD].encoderMinRange || origin.cuEncoderValue > g_pTransfMatrix[BELT_COORD].encoderMaxRange)
+			{
+				target.position.x = -999999;
+				target.position.y = -999999;
+				target.position.z = -999999;
+			}
+			else
+				target.position.x -= (origin.cuEncoderValue - g_pTransfMatrix[BELT_COORD].encoderMinRange) / (g_pTransfMatrix[BELT_COORD].encoderMaxRange - g_pTransfMatrix[BELT_COORD].encoderMinRange) * g_pTransfMatrix[BELT_COORD].beltLenght;
+		}
 	}
 }
 
-bool SetCameraMtrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
+bool SetCameraMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
 {
 	if (g_pTransfMatrix)
 	{
 		g_pTransfMatrix[CAMERA_COORD].r.x = r.x;
 		g_pTransfMatrix[CAMERA_COORD].r.y = r.y;
 		g_pTransfMatrix[CAMERA_COORD].r.z = r.z;
+
 		g_pTransfMatrix[CAMERA_COORD].t.x = t.x;
 		g_pTransfMatrix[CAMERA_COORD].t.y = t.y;
 		g_pTransfMatrix[CAMERA_COORD].t.z = t.z;
@@ -535,7 +560,7 @@ bool SetCameraMtrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
 		return false;
 }
 
-bool SetTargetMtrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
+bool SetTargetMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
 {
 	if (g_pTransfMatrix)
 	{
@@ -551,7 +576,7 @@ bool SetTargetMtrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
 		return false;
 }
 
-bool SetBeltMtrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r, const double &beltLenght, const double encoderMinRange, const double encoderMaxRange)
+bool SetBeltMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r, const double &beltLenght, const double encoderMinRange, const double encoderMaxRange)
 {						
 	if (g_pTransfMatrix)
 	{

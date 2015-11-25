@@ -803,7 +803,7 @@ void CALLBACK ReadBeltPosFun(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dwl, D
 	g_beltVel = g_beltPos_index ? (g_beltPos[g_beltPos_index] - g_beltPos[0]) / g_readBeltPos_delayTime * 1000 / g_beltPos_index : 0;
 }
 
-NYCE_STATUS RocksReadBeltEncoderVal(double &vel, double &pos)//
+NYCE_STATUS RocksReadBeltEncoderVal(double &vel, double &pos)//获取编码器位置和速度
 {	
 	if(g_wTimerID == 0)
 		return ROCKS_ERR_READ_BELT_POS_FAIL;
@@ -858,13 +858,15 @@ NYCE_STATUS RocksTermSystem()
 	return nyceStatus;
 }
 
-NYCE_STATUS RocksCalcCatchPos(ROCKS_COORD &position)
+NYCE_STATUS RocksCalcCatchPos(const ROCKS_COORD &currentRobotPos, const ROCKS_COORD &TargetPos, ROCKS_COORD &meetingPos)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
 	double vel, pos;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksReadBeltEncoderVal(vel, pos);
 
+	 
+	(doorTrajPars.riseHeight * 2 + doorTrajPars.startPos.position.z - doorTrajPars.endPos.position.z) 
 
 	return nyceStatus;
 }
