@@ -25,11 +25,12 @@ NYCE_STATUS RocksSetMechParsDelta(const double &lenOfBasePlatform, const double 
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksSetPuRateDelta(const double &rate1, const double &rate2, const double &rate3)
+NYCE_STATUS RocksSetPuRateDelta(const double &rate)
 {
-	rate_angle2pu[0] = rate1;
-	rate_angle2pu[1] = rate2;
-	rate_angle2pu[2] = rate3;
+	rate_angle2pu[0] = rate;
+	rate_angle2pu[1] = rate;
+	rate_angle2pu[2] = rate;
+	rate_angle2pu[3] = rate;
 
 	return NYCE_OK;
 }

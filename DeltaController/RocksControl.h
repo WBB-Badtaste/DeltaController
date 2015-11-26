@@ -52,7 +52,7 @@ NYCE_STATUS RocksInitDelta(const uint32_t &axesNum, const SAC_AXIS* const axId)
 
 /*	double rate_angle2pu = 131072 * 11 / (2 * M_PI);*/
 	double rate_angle2pu = 131072 * 40 / (2 * M_PI);
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetPuRateDelta(rate_angle2pu, rate_angle2pu, rate_angle2pu);
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetPuRateDelta(rate_angle2pu);
 
 	return nyceStatus;
 }
@@ -858,15 +858,60 @@ NYCE_STATUS RocksTermSystem()
 	return nyceStatus;
 }
 
-NYCE_STATUS RocksCalcCatchPos(const ROCKS_COORD &currentRobotPos, const ROCKS_COORD &TargetPos, ROCKS_COORD &meetingPos)
+NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD &cuRobotPos_kin, const ROCKS_COORD &cuTargetPos_belt, ROCKS_COORD &meetingPos_kin)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	double vel, pos;
-	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksReadBeltEncoderVal(vel, pos);
+	//读取当前的皮带编码器位置和速度
+	double encoderVel, encoderPos;
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksReadBeltEncoderVal(encoderVel, encoderPos);
 
-	 
-	(doorTrajPars.riseHeight * 2 + doorTrajPars.startPos.position.z - doorTrajPars.endPos.position.z) 
+	//目标在机构坐标系的位置
+	ROCKS_COORD cuTargetPos_kin;
+	cuTargetPos_kin.type = KIN_COORD;
+	ConvertTwoCoordinate(cuTargetPos_belt, cuTargetPos_kin);
+
+	//传送带在皮带坐标系中的速度
+	ROCKS_COORD beltVel_belt;
+	beltVel_belt.type = BELT_COORD;
+	beltVel_belt.position.x = g_beltLenght * encoderVel / (g_encoderMaxRange - g_encoderMinRange);
+	beltVel_belt.position.y = 0;
+	beltVel_belt.position.z = 0;
+
+	//传送带在机构坐标系中的速度
+	ROCKS_COORD beltVel_kin;
+	beltVel_kin.type = KIN_COORD;
+	ConvertTwoCoordinate(beltVel_belt, beltVel_kin);
+
+	//抓取位置阈值
+	ROCKS_COORD threshold_belt;
+	threshold_belt.type = BELT_COORD; 
+	threshold_belt.position.x = 10;
+	threshold_belt.position.y = 0;
+	threshold_belt.position.z = 0;
+	ROCKS_COORD threshold_kin;
+	threshold_kin.type = KIN_COORD;
+	ConvertTwoCoordinate(threshold_belt, threshold_kin);
+
+	//方程参数简化
+	double parX(cuRobotPos_kin.position.x - cuTargetPos_kin.position.x - threshold_kin.position.x);
+	double parY(cuRobotPos_kin.position.y - cuTargetPos_kin.position.y - threshold_kin.position.y);
+	double parZ(cuRobotPos_kin.position.z - cuTargetPos_kin.position.z - threshold_kin.position.z + doorPars.riseHeight * 2);
+
+	//计算参数项
+	double A((doorPars.trajPars.velocity / 2 + beltVel_kin.position.z) - beltVel_kin.position.x * beltVel_kin.position.x - beltVel_kin.position.y * beltVel_kin.position.y);
+	double B(doorPars.trajPars.velocity * parZ + 2 * beltVel_kin.position.z * parZ - 2 * beltVel_kin.position.x * parX - beltVel_kin.position.y * parY);
+	double C(parX * parX + parY * parY + parZ * parZ);
+
+	//韦达定理
+	double delta = B * B - 4 * A * C;
+	if (delta < 0)
+	{
+		return ROCKS_ERR_CALC_CATCH_POS_FAIL;
+	}
+
+
+	//这里添加判断是否在抓取区
 
 	return nyceStatus;
 }

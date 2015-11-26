@@ -17,6 +17,7 @@ typedef struct RocksCoordinate
 {
 	ROCKS_E3_VECTOR position;
 	COORD_TYPE type;
+	double cuEncoderValue;
 }ROCKS_COORD;
 
 //转换矩阵结构体
@@ -24,7 +25,4 @@ typedef struct TransfMatrix
 {
 	ROCKS_E3_VECTOR t;
 	ROCKS_E3_VECTOR r;
-	double beltLenght;
-	double encoderMinRange;
-	double encoderMaxRange;
 }TRANSF_MATRIX;

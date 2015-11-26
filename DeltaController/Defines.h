@@ -25,6 +25,10 @@ uint32_t g_readBeltPos_delayTime(500);
 MMRESULT g_wTimerID(0);
 BOOL g_readingBeltPos(FALSE);
 
+double g_beltLenght;
+double g_encoderMinRange;
+double g_encoderMaxRange;
+
 //坐标系相关
 TRANSF_MATRIX *g_pTransfMatrix;
 

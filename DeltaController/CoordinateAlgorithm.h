@@ -457,7 +457,7 @@ void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 	buffer.position.z = origin.position.z;
 	buffer.type = KIN_COORD;
 
-	//转化为世界坐标系
+	//转化为机构坐标系
 	if (origin.type != KIN_COORD)
 	{
 		double buf(0.0);
@@ -466,35 +466,24 @@ void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 		double angleY(g_pTransfMatrix[index].r.y);
 		double angleZ(g_pTransfMatrix[index].r.z);
 
-		if (origin.type == BELT_COORD)
-		{
-			if (origin.cuEncoderValue < g_pTransfMatrix[BELT_COORD].encoderMinRange || origin.cuEncoderValue > g_pTransfMatrix[BELT_COORD].encoderMaxRange)
-			{
-				buffer.position.x = -999999;
-				buffer.position.y = -999999;
-				buffer.position.z = -999999;
-			}
-			else
-				buffer.position.x += (origin.cuEncoderValue - g_pTransfMatrix[BELT_COORD].encoderMinRange) / (g_pTransfMatrix[BELT_COORD].encoderMaxRange - g_pTransfMatrix[BELT_COORD].encoderMinRange) * g_pTransfMatrix[BELT_COORD].beltLenght;
-		}
-			//Roll
-			buf =  buffer.position.y * cos(angleX) + buffer.position.z * sin(angleX);
-			buffer.position.z = -buffer.position.y * sin(angleX) + buffer.position.z * cos(angleX);
-			buffer.position.y =  buf;
+		//Roll
+					  buf =  buffer.position.y * cos(angleX) + buffer.position.z * sin(angleX);
+		buffer.position.z = -buffer.position.y * sin(angleX) + buffer.position.z * cos(angleX);
+		buffer.position.y =  buf;
 
-			//Pitch
-			buf = buffer.position.x * cos(angleY) - buffer.position.z * sin(angleY);
-			buffer.position.z = buffer.position.x * sin(angleY) + buffer.position.z * cos(angleY);
-			buffer.position.x = buf;
+		//Pitch
+					  buf = buffer.position.x * cos(angleY) - buffer.position.z * sin(angleY);
+		buffer.position.z = buffer.position.x * sin(angleY) + buffer.position.z * cos(angleY);
+		buffer.position.x = buf;
 
-			//Yaw
-			buf =  buffer.position.x * cos(angleZ) + buffer.position.y * sin(angleZ);
-			buffer.position.y = -buffer.position.x * sin(angleZ) + buffer.position.y * cos(angleZ);
-			buffer.position.x =  buf;
+		//Yaw
+					  buf =  buffer.position.x * cos(angleZ) + buffer.position.y * sin(angleZ);
+		buffer.position.y = -buffer.position.x * sin(angleZ) + buffer.position.y * cos(angleZ);
+		buffer.position.x =  buf;
 
-			buffer.position.x += g_pTransfMatrix[index].t.x;
-			buffer.position.y += g_pTransfMatrix[index].t.y;
-			buffer.position.z += g_pTransfMatrix[index].t.z;
+		buffer.position.x += g_pTransfMatrix[index].t.x;
+		buffer.position.y += g_pTransfMatrix[index].t.y; 
+		buffer.position.z += g_pTransfMatrix[index].t.z;
 	}
 
 	target.position.x = buffer.position.x;
@@ -529,17 +518,6 @@ void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 		target.position.z = -target.position.y * sin(angleX) + target.position.z * cos(angleX);
 		target.position.y =  buf;
 
-		if (origin.type == BELT_COORD)
-		{
-			if (origin.cuEncoderValue < g_pTransfMatrix[BELT_COORD].encoderMinRange || origin.cuEncoderValue > g_pTransfMatrix[BELT_COORD].encoderMaxRange)
-			{
-				target.position.x = -999999;
-				target.position.y = -999999;
-				target.position.z = -999999;
-			}
-			else
-				target.position.x -= (origin.cuEncoderValue - g_pTransfMatrix[BELT_COORD].encoderMinRange) / (g_pTransfMatrix[BELT_COORD].encoderMaxRange - g_pTransfMatrix[BELT_COORD].encoderMinRange) * g_pTransfMatrix[BELT_COORD].beltLenght;
-		}
 	}
 }
 
@@ -586,9 +564,6 @@ bool SetBeltMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r, const dou
 		g_pTransfMatrix[BELT_COORD].t.x = t.x;
 		g_pTransfMatrix[BELT_COORD].t.y = t.y;
 		g_pTransfMatrix[BELT_COORD].t.z = t.z;
-		g_pTransfMatrix[BELT_COORD].beltLenght = beltLenght;
-		g_pTransfMatrix[BELT_COORD].encoderMinRange = encoderMinRange;
-		g_pTransfMatrix[BELT_COORD].encoderMaxRange = encoderMaxRange;
 		return true;
 	}
 	else

@@ -72,9 +72,6 @@
     <ClInclude Include="SpaceAlgorithm.h">
       <Filter>Header Files\RocksEx</Filter>
     </ClInclude>
-    <ClInclude Include="RocksControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RocksExtren_Spiral.h">
       <Filter>Header Files\RocksEx</Filter>
     </ClInclude>
@@ -95,6 +92,9 @@
     </ClInclude>
     <ClInclude Include="CoordinateStructs.h">
       <Filter>Header Files\RocksEx</Filter>
+    </ClInclude>
+    <ClInclude Include="RocksControl.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
