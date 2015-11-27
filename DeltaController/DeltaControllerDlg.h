@@ -58,4 +58,5 @@ public:
 	afx_msg void OnBnClickedPump();
 	afx_msg void OnBnClickedSwitch();
 	afx_msg void OnBnClickedCirlce();
+	afx_msg void OnBnClickedCatch();
 };

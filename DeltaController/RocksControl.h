@@ -903,15 +903,36 @@ NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD 
 	double B(doorPars.trajPars.velocity * parZ + 2 * beltVel_kin.position.z * parZ - 2 * beltVel_kin.position.x * parX - beltVel_kin.position.y * parY);
 	double C(parX * parX + parY * parY + parZ * parZ);
 
-	//韦达定理
-	double delta = B * B - 4 * A * C;
+	//韦达定理计算时间
+	double delta(B * B - 4 * A * C);
 	if (delta < 0)
-	{
 		return ROCKS_ERR_CALC_CATCH_POS_FAIL;
+
+	double time, x1, x2;
+	if (delta == 0)
+	{
+		x1 = (sqrt(delta) - B) / 2 /A;
+		if (x1 < 0)
+			return ROCKS_ERR_CALC_CATCH_POS_FAIL;			
+		else time = x1;
+
+	}
+	else
+	{
+		x1 = (sqrt(delta) - B) / 2 /A;
+		x2 = (-sqrt(delta) - B) / 2 /A;
+		if ((x1 > 0 && x2 > 0) || (x1 < 0 && x2 < 0))
+			return ROCKS_ERR_CALC_CATCH_POS_FAIL;
+		else 
+			time = x1 > 0 ? x1 : x2;
 	}
 
+	//计算相遇点
+	meetingPos_kin.position.x = cuTargetPos_kin.position.x + beltVel_kin.position.x * time;
+	meetingPos_kin.position.y = cuTargetPos_kin.position.y + beltVel_kin.position.y * time;
+	meetingPos_kin.position.z = cuTargetPos_kin.position.z + beltVel_kin.position.z * time;
 
-	//这里添加判断是否在抓取区
+	//这里添加判断是否在抓取区?????
 
 	return nyceStatus;
 }

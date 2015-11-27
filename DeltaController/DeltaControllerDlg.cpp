@@ -95,6 +95,7 @@ BEGIN_MESSAGE_MAP(CDeltaControllerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &CDeltaControllerDlg::OnBnClickedPump)
 	ON_BN_CLICKED(IDC_BUTTON4, &CDeltaControllerDlg::OnBnClickedSwitch)
 	ON_BN_CLICKED(IDC_BUTTON9, &CDeltaControllerDlg::OnBnClickedCirlce)
+	ON_BN_CLICKED(IDC_BUTTON14, &CDeltaControllerDlg::OnBnClickedCatch)
 END_MESSAGE_MAP()
 
 
@@ -638,4 +639,12 @@ void CDeltaControllerDlg::OnBnClickedCirlce()//Բ�ι켣
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksCricleDelta(centerOffset, -M_PI * 8, trajPars);
 
 	StatusHandle(nyceStatus);
+}
+
+ROCKS_COORD 
+
+void CDeltaControllerDlg::OnBnClickedCatch()
+{
+	// TODO: Add your control notification handler code here
+
 }
