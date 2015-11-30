@@ -51,8 +51,9 @@ NYCE_STATUS RocksInitDelta(const uint32_t &axesNum, const SAC_AXIS* const axId)
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetMechParsDelta(f, e, rf, re);
 
 /*	double rate_angle2pu = 131072 * 11 / (2 * M_PI);*/
-	double rate_angle2pu = 131072 * 40 / (2 * M_PI);
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetPuRateDelta(rate_angle2pu);
+	double rate_angle2pu_robot = 131072 * 40 / (2 * M_PI);
+	double rate_angle2pu_belta = 131072 * 5 / (2 * M_PI);
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetPuRateDelta(rate_angle2pu_robot, rate_angle2pu_belta);
 
 	return nyceStatus;
 }
@@ -713,7 +714,7 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	ROCKS_POSE pose;
 	pose.r.x = 0;
 	pose.r.y = 0;
-	pose.r.z = angleZ;
+	pose.r.z = -angleZ;
 	pose.t.x = 0;
 	pose.t.y = 0;
 	pose.t.z = 0;
@@ -738,9 +739,17 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 
 NYCE_STATUS RocksSetHomePos(const ROCKS_COORD &rocksCoord)
 {
-	bInitHomePos = TRUE;
-	homePos.type = KIN_COORD;
-	ConvertTwoCoordinate(rocksCoord, homePos);
+	g_bInitHomePos = TRUE;
+	g_homePos.type = KIN_COORD;
+	ConvertTwoCoordinate(rocksCoord, g_homePos);
+
+	return NYCE_OK;
+}
+
+NYCE_STATUS RocksSetPlacePos(const ROCKS_COORD &rocksCoord)
+{
+	g_homePos.type = KIN_COORD;
+	ConvertTwoCoordinate(rocksCoord, g_placePos);
 
 	return NYCE_OK;
 }
@@ -754,7 +763,7 @@ NYCE_STATUS RocksHomeDelta(const TRAJ_PARS &trajPars)
 	joinPos[1] = 0.0;
 	joinPos[2] = 0.0;
 
-	if (!bInitHomePos)
+	if (!g_bInitHomePos)
 	{
 		double cartesianPos[3];
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksKinForwardDelta(&m_mech, joinPos, cartesianPos);
@@ -768,7 +777,7 @@ NYCE_STATUS RocksHomeDelta(const TRAJ_PARS &trajPars)
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetHomePos(ptpPos);
 	}
 	
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(homePos, trajPars);
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(g_homePos, trajPars);
 	
 	return nyceStatus;
 }
@@ -783,88 +792,98 @@ NYCE_STATUS RocksReadPosDelta(double *position)
 }
 
 
-void CALLBACK ReadBeltPosFun(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dwl, DWORD dw2)
+// void CALLBACK ReadBeltPosFun(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dwl, DWORD dw2)
+// {
+// 	double pos(0.0);
+// 
+// 	//读取传送带编码器值,并存入20位的队列
+// 	if (NyceSuccess(SacReadVariable(axId[4], SAC_VAR_AXIS_POS, &pos)))//注意传送带的长度有限
+// 	{
+// 		if (g_beltPos_index == NUM_BELTPOS_QUE - 1)
+// 			for (uint32_t i = 0; i < g_beltPos_index;)
+// 				g_beltPos[i] = g_beltPos[++i];
+// 		else
+// 			++g_beltPos_index;
+// 
+// 		g_beltPos[g_beltPos_index] = pos;
+// 	}
+// 
+// 	//计算速度
+// 	g_beltVel = g_beltPos_index ? (g_beltPos[g_beltPos_index] - g_beltPos[0]) / g_readBeltPos_delayTime * 1000 / g_beltPos_index : 0;
+// }
+// 
+// NYCE_STATUS RocksReadBeltEncoderVal(double &vel, double &pos)//获取编码器位置和速度
+// {	
+// 	if(g_wTimerID == 0)
+// 		return ROCKS_ERR_READ_BELT_POS_FAIL;
+// 
+// 	vel = g_beltVel;
+// 	pos = g_beltPos[g_beltPos_index];
+// 
+// 	return NYCE_OK;
+// }
+
+// NYCE_STATUS	RocksCatchTarget(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD &coord)
+// {
+// 	NYCE_STATUS nyceStatus(NYCE_OK);
+// 
+// 	ROCKS_COORD kinCoord;
+// 	kinCoord.type = KIN_COORD;
+// 
+// 	ConvertTwoCoordinate(coord, kinCoord);
+// 
+// 	double time((doorPars.startPos.position.z - doorPars.endPos.position.z + doorPars.riseHeight * 2) / doorPars.trajPars.velocity * 2);
+// 
+// 	return nyceStatus;
+// }
+
+NYCE_STATUS RocksInitMatrix()
 {
-	double pos(0.0);
+// 	if (!g_readingBeltPos)
+// 	{
+// 		uint32_t wTimerRes = 1;
+// 		timeBeginPeriod(wTimerRes);
+// 
+// 		g_wTimerID = timeSetEvent(g_readBeltPos_delayTime,  wTimerRes, (LPTIMECALLBACK)ReadBeltPosFun,  NULL, TIME_PERIODIC);   
+// 		Sleep(1000);
+// 	}
+// 
+// 	if(g_wTimerID == 0)
+// 		return ROCKS_ERR_READ_BELT_POS_FAIL;
 
-	//读取传送带编码器值,并存入20位的队列
-	if (NyceSuccess(SacReadVariable(axId[4], SAC_VAR_AXIS_POS, &pos)))//注意传送带的长度有限
-	{
-		if (g_beltPos_index == NUM_BELTPOS_QUE - 1)
-			for (uint32_t i = 0; i < g_beltPos_index;)
-				g_beltPos[i] = g_beltPos[++i];
-		else
-			++g_beltPos_index;
+	g_pTransfMatrix = new TRANSF_MATRIX[NUM_COORD_TYPES]();
 
-		g_beltPos[g_beltPos_index] = pos;
-	}
-
-	//计算速度
-	g_beltVel = g_beltPos_index ? (g_beltPos[g_beltPos_index] - g_beltPos[0]) / g_readBeltPos_delayTime * 1000 / g_beltPos_index : 0;
-}
-
-NYCE_STATUS RocksReadBeltEncoderVal(double &vel, double &pos)//获取编码器位置和速度
-{	
-	if(g_wTimerID == 0)
-		return ROCKS_ERR_READ_BELT_POS_FAIL;
-
-	vel = g_beltVel;
-	pos = g_beltPos[g_beltPos_index];
-
-	return NYCE_OK;
-}
-
-NYCE_STATUS	RocksCatchTarget(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD &coord)
-{
-	NYCE_STATUS nyceStatus(NYCE_OK);
-
-	ROCKS_COORD kinCoord;
-	kinCoord.type = KIN_COORD;
-
-	ConvertTwoCoordinate(coord, kinCoord);
-
-	double time((doorPars.startPos.position.z - doorPars.endPos.position.z + doorPars.riseHeight * 2) / doorPars.trajPars.velocity * 2);
-
-	return nyceStatus;
-}
-
-NYCE_STATUS RocksInitSystem()
-{
-	if (!g_readingBeltPos)
-	{
-		uint32_t wTimerRes = 1;
-		timeBeginPeriod(wTimerRes);
-
-		g_wTimerID = timeSetEvent(g_readBeltPos_delayTime,  wTimerRes, (LPTIMECALLBACK)ReadBeltPosFun,  NULL, TIME_PERIODIC);   
-		Sleep(1000);
-	}
-
-	if(g_wTimerID == 0)
-		return ROCKS_ERR_READ_BELT_POS_FAIL;
-
-	g_pTransfMatrix = new TRANSF_MATRIX[NUM_COORD_TYPES]();//注意是否初始化完成
+// 	for (uint32_t i = 0; i < NUM_COORD_TYPES; i++)
+// 	{
+// 		g_pTransfMatrix[i].r.x = 0;
+// 		g_pTransfMatrix[i].r.y = 0;
+// 		g_pTransfMatrix[i].r.z = 0;
+// 		g_pTransfMatrix[i].t.x = 0;
+// 		g_pTransfMatrix[i].t.y = 0;
+// 		g_pTransfMatrix[i].t.z = 0;
+// 	}
 	
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksTermSystem()
+NYCE_STATUS RocksTermMatrix()
 {
-	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	timeKillEvent(g_wTimerID);
+//	timeKillEvent(g_wTimerID);
 
 	delete[] g_pTransfMatrix;
 
-	return nyceStatus;
+	return NYCE_OK;
 }
 
-NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD &cuRobotPos_kin, const ROCKS_COORD &cuTargetPos_belt, ROCKS_COORD &meetingPos_kin)
+NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD &cuTargetPos_belt, ROCKS_COORD &meetingPos_kin)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
 	//读取当前的皮带编码器位置和速度
 	double encoderVel, encoderPos;
-	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksReadBeltEncoderVal(encoderVel, encoderPos);
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : SacReadVariable(SAC_VAR_AXIS_VEL, beltId[0], &encoderVel);
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : SacReadVariable(SAC_VAR_AXIS_POS, beltId[0], &encoderPos);
 
 	//目标在机构坐标系的位置
 	ROCKS_COORD cuTargetPos_kin;
@@ -894,9 +913,9 @@ NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD 
 	ConvertTwoCoordinate(threshold_belt, threshold_kin);
 
 	//方程参数简化
-	double parX(cuRobotPos_kin.position.x - cuTargetPos_kin.position.x - threshold_kin.position.x);
-	double parY(cuRobotPos_kin.position.y - cuTargetPos_kin.position.y - threshold_kin.position.y);
-	double parZ(cuRobotPos_kin.position.z - cuTargetPos_kin.position.z - threshold_kin.position.z + doorPars.riseHeight * 2);
+	double parX(doorPars.startPos.position.x - cuTargetPos_kin.position.x - threshold_kin.position.x);
+	double parY(doorPars.startPos.position.y - cuTargetPos_kin.position.y - threshold_kin.position.y);
+	double parZ(doorPars.startPos.position.z - cuTargetPos_kin.position.z - threshold_kin.position.z + doorPars.riseHeight * 2);
 
 	//计算参数项
 	double A((doorPars.trajPars.velocity / 2 + beltVel_kin.position.z) - beltVel_kin.position.x * beltVel_kin.position.x - beltVel_kin.position.y * beltVel_kin.position.y);
@@ -911,7 +930,7 @@ NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD 
 	double time, x1, x2;
 	if (delta == 0)
 	{
-		x1 = (sqrt(delta) - B) / 2 /A;
+		x1 = (sqrt(delta) - B) / 2 / A;
 		if (x1 < 0)
 			return ROCKS_ERR_CALC_CATCH_POS_FAIL;			
 		else time = x1;
@@ -919,12 +938,12 @@ NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD 
 	}
 	else
 	{
-		x1 = (sqrt(delta) - B) / 2 /A;
-		x2 = (-sqrt(delta) - B) / 2 /A;
+		x1 = (sqrt(delta) - B) / 2 / A;
+		x2 = (-sqrt(delta) - B) / 2 / A;
 		if ((x1 > 0 && x2 > 0) || (x1 < 0 && x2 < 0))
 			return ROCKS_ERR_CALC_CATCH_POS_FAIL;
 		else 
-			time = x1 > 0 ? x1 : x2;
+			time = x1 > 0 ? x1 : x2; 
 	}
 
 	//计算相遇点
@@ -935,4 +954,11 @@ NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD 
 	//这里添加判断是否在抓取区?????
 
 	return nyceStatus;
+}
+
+NYCE_STATUS RocksGetTargetPos(ROCKS_COORD &targetPos)
+{
+	NYCE_STATUS nyceSatus(NYCE_OK);
+
+	return nyceSatus;
 }

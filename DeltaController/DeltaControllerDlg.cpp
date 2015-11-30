@@ -96,6 +96,7 @@ BEGIN_MESSAGE_MAP(CDeltaControllerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON4, &CDeltaControllerDlg::OnBnClickedSwitch)
 	ON_BN_CLICKED(IDC_BUTTON9, &CDeltaControllerDlg::OnBnClickedCirlce)
 	ON_BN_CLICKED(IDC_BUTTON14, &CDeltaControllerDlg::OnBnClickedCatch)
+	ON_BN_CLICKED(IDC_BUTTON16, &CDeltaControllerDlg::OnBnClickedBelt)
 END_MESSAGE_MAP()
 
 
@@ -187,8 +188,10 @@ HCURSOR CDeltaControllerDlg::OnQueryDragIcon()
 }
 
 
-#define DOOR_HIGHT1 -650
-#define DOOR_HIGHT2 -650
+#define DOOR_HIGHT1 -720
+#define DOOR_HIGHT2 -720
+#define DOOR_PAR_X 152.5
+#define DOOR_PAR_Y 152.5
 void CDeltaControllerDlg::OnBnClickedDoor()//门型运动
 {
 	// TODO: Add your control notification handler code here
@@ -197,23 +200,30 @@ void CDeltaControllerDlg::OnBnClickedDoor()//门型运动
 	UpdateData(TRUE);
 
 	DOOR_TRAJ_PARS doorPars1, doorPars2;
-	doorPars1.startPos.position.x = -152.5;
-	doorPars1.startPos.position.y = 0.0;
+	doorPars1.startPos.type = KIN_COORD;
+	doorPars1.startPos.position.x = -DOOR_PAR_X;
+	doorPars1.startPos.position.y = -DOOR_PAR_Y;
 	doorPars1.startPos.position.z = DOOR_HIGHT1;
-	doorPars1.endPos.position.x = 152.5;
-	doorPars1.endPos.position.y = 0.0;
+
+	doorPars1.endPos.type = KIN_COORD;
+	doorPars1.endPos.position.x = DOOR_PAR_X;
+	doorPars1.endPos.position.y = DOOR_PAR_Y;
 	doorPars1.endPos.position.z = DOOR_HIGHT2;
+
 	doorPars1.riseHeight = 25.0;
 	doorPars1.radius = 8.0;
 	doorPars1.trajPars.velocity = m_motion_par_vel;
 	doorPars1.trajPars.acceleration = doorPars1.trajPars.velocity * 100;
 	doorPars1.trajPars.splineTime = 0.01;
 
-	doorPars2.startPos.position.x = 152.5;
-	doorPars2.startPos.position.y = 0.0;
+	doorPars2.startPos.type = KIN_COORD;
+	doorPars2.startPos.position.x = DOOR_PAR_X;
+	doorPars2.startPos.position.y = DOOR_PAR_Y;
 	doorPars2.startPos.position.z = DOOR_HIGHT1;
-	doorPars2.endPos.position.x = -152.5;
-	doorPars2.endPos.position.y = 0.0;
+
+	doorPars2.endPos.type = KIN_COORD;
+	doorPars2.endPos.position.x = -DOOR_PAR_X;
+	doorPars2.endPos.position.y = -DOOR_PAR_Y;
 	doorPars2.endPos.position.z = DOOR_HIGHT2;
 	doorPars2.riseHeight = 25.0 + DOOR_HIGHT1 - DOOR_HIGHT2;
 	doorPars2.radius = 8.0;
@@ -221,8 +231,22 @@ void CDeltaControllerDlg::OnBnClickedDoor()//门型运动
 	doorPars2.trajPars.acceleration = doorPars2.trajPars.velocity * 100;
 	doorPars2.trajPars.splineTime = 0.01;
 
+	TRAJ_PARS readyPars;
+	readyPars.velocity = 800;
+	readyPars.acceleration = 800 * 100;
+	readyPars.splineTime = 0.01;
 
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(doorPars1.startPos, doorPars1.trajPars);
+	double position[6];
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksReadPosDelta(position);
+
+	if (position[0] - doorPars1.startPos.position.x >  0.1 ||
+		position[1] - doorPars1.startPos.position.y >  0.1 ||
+		position[2] - doorPars1.startPos.position.z >  0.1 ||
+		position[0] - doorPars1.startPos.position.x < -0.1 ||
+		position[1] - doorPars1.startPos.position.y < -0.1 ||
+		position[2] - doorPars1.startPos.position.z < -0.1 )
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(doorPars1.startPos, readyPars);
+
 
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksDoorDelta(doorPars1);
 
@@ -298,7 +322,11 @@ void CDeltaControllerDlg::OnBnClickedInit()//初始化
 
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : InitAxisRexroth(NUM_AXES, axId, axName);
 
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : InitAxisRexroth(NUM_AXES_BELT, beltId, beltaName);
+
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksInitDelta(NUM_AXES, axId);
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksInitMatrix();
 
 	StatusHandle(nyceStatus);
 
@@ -318,9 +346,13 @@ void CDeltaControllerDlg::OnDestroy()
 
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : TermAxis(NUM_AXES, axId);
 
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : TermAxis(NUM_AXES_BELT, beltId);
+
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiDisconnect(noId[0]);
 
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NyceTerm();
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksTermMatrix();
 
 	StatusHandle(nyceStatus);
 }
@@ -351,8 +383,8 @@ void CDeltaControllerDlg::OnBnClickedHome()//回零位
 
 	UpdateData(TRUE);
 	TRAJ_PARS trajPars;
-	trajPars.velocity = m_motion_par_vel;
-	trajPars.acceleration = m_motion_par_vel * 100;
+	trajPars.velocity = 800;
+	trajPars.acceleration = trajPars.velocity * 100;
 	trajPars.splineTime = 0.01;
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksHomeDelta(trajPars);
 
@@ -448,7 +480,7 @@ void CDeltaControllerDlg::OnBnClickedButton10()//-1
 	pos.position.y = 0;
 	pos.position.z = 0;
 	UpdateData(TRUE);
-	switch (m_motion_par_direc)  
+	switch (m_motion_par_direc) 
 	{
 	case 0:
 		pos.position.x = -1;
@@ -630,7 +662,21 @@ void CDeltaControllerDlg::OnBnClickedCirlce()//圆形轨迹
 	trajPars.acceleration = m_motion_par_vel * 100;
 	trajPars.splineTime = 0.005;
 
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(readyPos, trajPars);
+	TRAJ_PARS readyPars;
+	readyPars.velocity = 800;
+	readyPars.acceleration = 800 * 100;
+	readyPars.splineTime = 0.01;
+
+	double position[6];
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksReadPosDelta(position);
+
+	if (position[0] - readyPos.position.x >  0.1 ||
+		position[1] - readyPos.position.y >  0.1 ||
+		position[2] - readyPos.position.z >  0.1 ||
+		position[0] - readyPos.position.x < -0.1 ||
+		position[1] - readyPos.position.y < -0.1 ||
+		position[2] - readyPos.position.z < -0.1 )
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(readyPos, readyPars);
 
 	CARTESIAN_COORD centerOffset;
 	centerOffset.x = 100;
@@ -641,10 +687,61 @@ void CDeltaControllerDlg::OnBnClickedCirlce()//圆形轨迹
 	StatusHandle(nyceStatus);
 }
 
-ROCKS_COORD 
+
 
 void CDeltaControllerDlg::OnBnClickedCatch()
 {
 	// TODO: Add your control notification handler code here
 
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	UpdateData(TRUE);
+
+	if (m_motion_par_vel == 0)
+		return;//添加异常处理
+
+	double robotPos[6];
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksReadPosDelta(robotPos);
+
+	DOOR_TRAJ_PARS doorTrajPars;
+	doorTrajPars.startPos.type = KIN_COORD;
+	doorTrajPars.startPos.position.x = robotPos[0];
+	doorTrajPars.startPos.position.y = robotPos[1];
+	doorTrajPars.startPos.position.z = robotPos[2];
+	doorTrajPars.trajPars.velocity = m_motion_par_vel;
+	doorTrajPars.trajPars.acceleration = m_motion_par_vel * 100;
+	doorTrajPars.trajPars.splineTime = 0.01;
+	doorTrajPars.endPos.type = KIN_COORD;
+	doorTrajPars.radius = 8;
+	doorTrajPars.riseHeight = 25;
+
+	ROCKS_COORD targetPos;
+	targetPos.type = BELT_COORD;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksGetTargetPos(targetPos);
+
+	targetPos.type = BELT_COORD;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksCalcCatchPos(doorTrajPars, targetPos, doorTrajPars.endPos);
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksDoorDelta(doorTrajPars);
+}
+
+
+void CDeltaControllerDlg::OnBnClickedBelt()//传送带控制
+{
+	// TODO: Add your control notification handler code here
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	SAC_STATE state;
+	SAC_SPG_STATE spgState;
+	SacReadState(beltId[0], &state, &spgState);
+
+	SAC_JOG_PARS jogPars;
+	jogPars.velocity = 2000000;
+	jogPars.acceleration = jogPars.velocity * 10;
+	jogPars.jerk = jogPars.velocity * 100;
+
+	if (state == SAC_READY)
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacStartJog(beltId[0], &jogPars);
+	else
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacStopJog(beltId[0], &jogPars);
 }

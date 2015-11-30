@@ -6,16 +6,17 @@
 #include "sacapi.h"
 #include "nhiapi.h"
 
-#define NUM_AXES 4
-const char *axName[ NUM_AXES ] = { "DEF_AXIS_1", "DEF_AXIS_3", "DEF_AXIS_2", "DEF_AXIS_4" };
-
+#define NUM_AXES 3
+const char *axName[ NUM_AXES ] = { "DEF_AXIS_1", "DEF_AXIS_3", "DEF_AXIS_2"};
 SAC_AXIS axId[ NUM_AXES ];
+
+#define NUM_AXES_BELT 1
+const char *beltaName[ NUM_AXES_BELT ] = {"DEF_AXIS_4"};
+SAC_AXIS beltId[ NUM_AXES_BELT ];
 
 #define NUM_NODE 1
 const char *noName[ NUM_NODE ] = { "NY411x_node" };
-
 NHI_NODE noId[ NUM_NODE ];
-
 
 //皮带相关
 #define NUM_BELTPOS_QUE 20
@@ -33,5 +34,7 @@ double g_encoderMaxRange;
 TRANSF_MATRIX *g_pTransfMatrix;
 
 //特殊坐标 
-ROCKS_COORD homePos;
-BOOL bInitHomePos;
+ROCKS_COORD g_homePos;
+BOOL g_bInitHomePos;
+ROCKS_COORD g_placePos;
+ROCKS_COORD g_pickPos;

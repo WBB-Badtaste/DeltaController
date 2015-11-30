@@ -25,12 +25,12 @@ NYCE_STATUS RocksSetMechParsDelta(const double &lenOfBasePlatform, const double 
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksSetPuRateDelta(const double &rate)
+NYCE_STATUS RocksSetPuRateDelta(const double &rate_robot, const double &rate_belt)
 {
-	rate_angle2pu[0] = rate;
-	rate_angle2pu[1] = rate;
-	rate_angle2pu[2] = rate;
-	rate_angle2pu[3] = rate;
+	rate_angle2pu[0] = rate_robot;
+	rate_angle2pu[1] = rate_robot;
+	rate_angle2pu[2] = rate_robot;
+	rate_angle2pu[3] = rate_belt;
 
 	return NYCE_OK;
 }
@@ -72,7 +72,7 @@ NYCE_STATUS RocksKinForwardDelta(ROCKS_MECH* pMech, const double pJointPos[], do
 	ZeroMemory(pMechPos, sizeof(double) * ROCKS_MECH_MAX_DOF);
 
 	double jointAnglePos[ROCKS_MECH_MAX_NR_OF_JOINTS];
-	for (uint32_t ax = 0; ax < ROCKS_MECH_MAX_NR_OF_JOINTS; ax++)
+	for (uint32_t ax = 0; ax < 3; ax++)
 	{
 		ConvertPUToAngle(pJointPos[ax], jointAnglePos[ax], ax);
 		if (jointAnglePos[ax] < -M_PI_2 || jointAnglePos[ax] > M_PI_2)
