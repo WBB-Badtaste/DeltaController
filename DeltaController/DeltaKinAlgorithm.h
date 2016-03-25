@@ -14,16 +14,16 @@ typedef struct DeltaMechPars
 }DELTA_MECH_PARS;
 
 // trigonometric constants
-const double sqrt3 = sqrt(3.0);
-const double sin120 = sqrt3 / 2.0;   
-const double cos120 = -0.5;        
-const double tan60 = sqrt3;
-const double sin30 = 0.5;
-const double tan30 = 1 / sqrt3;
+static const double sqrt3 = sqrt(3.0);
+static const double sin120 = sqrt3 / 2.0;   
+static const double cos120 = -0.5;        
+static const double tan60 = sqrt3;
+static const double sin30 = 0.5;
+static const double tan30 = 1 / sqrt3;
 
 // forward kinematics: (theta1, theta2, theta3) -> (x0, y0, z0)
 // returned status: 0=OK, -1=non-existing position
-BOOL DeltaCalcPosForward(const DELTA_MECH_PARS &deltaMechPars, const double* const pJointPos, double* const pCartesianPos) 
+static BOOL DeltaCalcPosForward(const DELTA_MECH_PARS &deltaMechPars, const double* const pJointPos, double* const pCartesianPos) 
 {
 	double t(deltaMechPars.f - deltaMechPars.e);
 
@@ -70,7 +70,7 @@ BOOL DeltaCalcPosForward(const DELTA_MECH_PARS &deltaMechPars, const double* con
 
 // inverse kinematics
 // helper functions, calculates angle theta1 (for YZ-pane)
-BOOL DeltaCalcAngleYZ(const DELTA_MECH_PARS &deltaMechPars, const double &x, const double &y, const double &z, double &theta) 
+static BOOL DeltaCalcAngleYZ(const DELTA_MECH_PARS &deltaMechPars, const double &x, const double &y, const double &z, double &theta) 
 {
 	// z = a + b*y
 	double a((x * x + (y - deltaMechPars.e) * (y - deltaMechPars.e) + z * z + deltaMechPars.rf * deltaMechPars.rf - deltaMechPars.re * deltaMechPars.re - deltaMechPars.f * deltaMechPars.f) / (2 * z));
@@ -87,7 +87,7 @@ BOOL DeltaCalcAngleYZ(const DELTA_MECH_PARS &deltaMechPars, const double &x, con
 
 // inverse kinematics: (x0, y0, z0) -> (theta1, theta2, theta3)
 // returned status: 0=OK, -1=non-existing position
-BOOL DeltaCalcPosInverse(const DELTA_MECH_PARS &deltaMechPars, const double* const pCartesianPos, double* const pJointPos) 
+static BOOL DeltaCalcPosInverse(const DELTA_MECH_PARS &deltaMechPars, const double* const pCartesianPos, double* const pJointPos) 
 {
 	pJointPos[0] = pJointPos[1] = pJointPos[2] = 0;
 
@@ -101,7 +101,7 @@ BOOL DeltaCalcPosInverse(const DELTA_MECH_PARS &deltaMechPars, const double* con
 }
 
 //vel IK
-BOOL DeltaCalcVelInverse(const DELTA_MECH_PARS &deltaMechPars, const double* const pCartesianPos, const double* const pCartesianVel, const double* const pJointPos, double* const pJointVel)
+static BOOL DeltaCalcVelInverse(const DELTA_MECH_PARS &deltaMechPars, const double* const pCartesianPos, const double* const pCartesianVel, const double* const pJointPos, double* const pJointVel)
 {
 	double wb(deltaMechPars.f);
 	double up(deltaMechPars.e);

@@ -32,7 +32,7 @@ typedef struct rocks_traj_segment_spiral_pars_ex
 	ROCKS_POSE  originOffset;                   /**< Reference frame rotation offsets to be added before the arc */
 } ROCKS_TRAJ_SEGMENT_SPIRAL_PARS_EX;
 
-NYCE_STATUS RocksTrajSegmentSpiral(ROCKS_MECH *pMech, const ROCKS_TRAJ_SEGMENT_SPIRAL_PARS *pTraj)
+static NYCE_STATUS RocksTrajSegmentSpiral(ROCKS_MECH *pMech, const ROCKS_TRAJ_SEGMENT_SPIRAL_PARS *pTraj)
 {
 	double startPos[2];
 	double moveSignal(0.0);
@@ -139,7 +139,7 @@ NYCE_STATUS RocksTrajSegmentSpiral(ROCKS_MECH *pMech, const ROCKS_TRAJ_SEGMENT_S
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksTrajSegmentSpiral(ROCKS_MECH *pMech, const ROCKS_TRAJ_SEGMENT_SPIRAL_PARS_EX *pTraj)
+static NYCE_STATUS RocksTrajSegmentSpiral(ROCKS_MECH *pMech, const ROCKS_TRAJ_SEGMENT_SPIRAL_PARS_EX *pTraj)
 {
 	double startPos[2];
 	double moveSignal(0.0);

@@ -3,7 +3,7 @@
 #include "NyceExDefs.h"
 #include <nyceapi.h>
 
-const char* NyceGetStatusStringEx(NYCE_STATUS statusCode)
+static const char* NyceGetStatusStringEx(NYCE_STATUS statusCode)
 {
 	switch (statusCode)
 	{

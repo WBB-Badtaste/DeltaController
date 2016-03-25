@@ -9,13 +9,13 @@
 
 #include <rocksapi.h>
 
-uint32_t mix_Boundary = 0;
-ROCKS_PLANE mix_plane = ROCKS_PLANE_XY;
-ROCKS_POSE mix_pose;
-uint32_t mix_moveType = ROCKS_MOVE_TYPE_LINEAR;
-double mix_startPos1, mix_endPos1, mix_startPos2, mix_endPos2, mix_center1, mix_center2, mix_angle, mix_endPos_x, mix_endPos_y, mix_endPos_z;
+static uint32_t mix_Boundary = 0;
+static ROCKS_PLANE mix_plane = ROCKS_PLANE_XY;
+static ROCKS_POSE mix_pose;
+static uint32_t mix_moveType = ROCKS_MOVE_TYPE_LINEAR;
+static double mix_startPos1, mix_endPos1, mix_startPos2, mix_endPos2, mix_center1, mix_center2, mix_angle, mix_endPos_x, mix_endPos_y, mix_endPos_z;
 
-void ConvertCriclePath(const ROCKS_PLANE &plane, const ROCKS_POSE &pose, const double &startPos1, const double &startPos2, const double &center1, const double &center2, const double &angle, const  double &CurrentDistance, const double &CurrentVelocity, double *const pPosition, double *const pVelocity)
+static void ConvertCriclePath(const ROCKS_PLANE &plane, const ROCKS_POSE &pose, const double &startPos1, const double &startPos2, const double &center1, const double &center2, const double &angle, const  double &CurrentDistance, const double &CurrentVelocity, double *const pPosition, double *const pVelocity)
 {
 	double radius = sqrt((center1 - startPos1) * (center1 - startPos1) + (center2 - startPos2) * (center2 - startPos2));
 	double beta(0.0);
@@ -84,7 +84,7 @@ void ConvertCriclePath(const ROCKS_PLANE &plane, const ROCKS_POSE &pose, const d
 	pPosition[2] += pose.t.z;
 }
 
-void ConvertCriclePath(const double *const pStartPos, const double &totalAngle, const double &CurrentDistance, const double &CurrentVelocity, const ROCKS_PLANE &plane, const double &radius, const double *const pCenter, double *const pPosition, double *const pVelocity)
+static void ConvertCriclePath(const double *const pStartPos, const double &totalAngle, const double &CurrentDistance, const double &CurrentVelocity, const ROCKS_PLANE &plane, const double &radius, const double *const pCenter, double *const pPosition, double *const pVelocity)
 {
 	double angle(0.0);
 	double beta(0.0);
@@ -166,7 +166,7 @@ void ConvertCriclePath(const double *const pStartPos, const double &totalAngle, 
 
 }
 
-void ConverSpiralPath(const ROCKS_PLANE &plane, const ROCKS_POSE &pose, const double &startPos1, const double &startPos2, const double &endPos1, const double &endPos2, const double &center1, const double &center2, const double &CurrentDistance, const double &CurrentVelocity, double *const pPosition, double *const pVelocity)
+static void ConverSpiralPath(const ROCKS_PLANE &plane, const ROCKS_POSE &pose, const double &startPos1, const double &startPos2, const double &endPos1, const double &endPos2, const double &center1, const double &center2, const double &CurrentDistance, const double &CurrentVelocity, double *const pPosition, double *const pVelocity)
 {
 	double stratRadius(0.0), endRadius(0.0), a(0.0), b(0.0);
 	CalcArchimedeSpiralPars(startPos1, startPos2, endPos1, endPos2, center1, center2, stratRadius, endRadius, a, b);
@@ -222,7 +222,7 @@ void ConverSpiralPath(const ROCKS_PLANE &plane, const ROCKS_POSE &pose, const do
 	pPosition[2] += pose.t.z;
 }
 
-void ConverLinePath(const ROCKS_PLANE &plane, const ROCKS_POSE &pose, const double &startPos1, const double &endPose1, const double &startPos2, const double &endPose2 , const double &CurrentDistance, const double &CurrentVelocity, double *const pPosition, double *const pVelocity)
+static void ConverLinePath(const ROCKS_PLANE &plane, const ROCKS_POSE &pose, const double &startPos1, const double &endPose1, const double &startPos2, const double &endPose2 , const double &CurrentDistance, const double &CurrentVelocity, double *const pPosition, double *const pVelocity)
 {
 	double distance = sqrt((endPose1 - startPos1) * (endPose1 - startPos1) + (endPose2 - startPos2) * (endPose2 - startPos2));
 	double rate1 = (endPose1 - startPos1) / distance;
@@ -287,7 +287,7 @@ void ConverLinePath(const ROCKS_PLANE &plane, const ROCKS_POSE &pose, const doub
 	pPosition[2] += pose.t.z;
 }
 
-void ConverLinePath(const double *const pStartPos, const double *const pEndPos, const double &totalDistance, const double &CurrentDistance, const double &CurrentVelocity, double *const pPosition, double *const pVelocity)
+static void ConverLinePath(const double *const pStartPos, const double *const pEndPos, const double &totalDistance, const double &CurrentDistance, const double &CurrentVelocity, double *const pPosition, double *const pVelocity)
 {
 	double rate_x = (pEndPos[0] - pStartPos[0]) / totalDistance;
 	double rate_y = (pEndPos[1] - pStartPos[1]) / totalDistance;
@@ -302,7 +302,7 @@ void ConverLinePath(const double *const pStartPos, const double *const pEndPos, 
 	pVelocity[2] = CurrentVelocity * rate_z;
 }
 
-void ConvertPathToWorldCoordinate(const ROCKS_MECH* const pMech, uint32_t &index, double *const pPosition, double *const pVelocity)
+static void ConvertPathToWorldCoordinate(const ROCKS_MECH* const pMech, uint32_t &index, double *const pPosition, double *const pVelocity)
 {
 	if (pMech->var.moveType == ROCKS_MOVE_TYPE_CIRCULAR)//check the path type
 	{
@@ -449,16 +449,26 @@ void ConvertPathToWorldCoordinate(const ROCKS_MECH* const pMech, uint32_t &index
 	pPosition[2] += pMech->var.refFramePose2.t.z;
 } 
 
-void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
+static void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 {
+
+	if (origin.type == target.type)
+	{
+		target.position.x = origin.position.x;
+		target.position.y = origin.position.y;
+		target.position.z = origin.position.z;
+
+		return;
+	}
+
 	ROCKS_COORD buffer;
 	buffer.position.x = origin.position.x;
 	buffer.position.y = origin.position.y;
 	buffer.position.z = origin.position.z;
-	buffer.type = KIN_COORD;
+	buffer.type = BASE_COORD;
 
-	//转化为机构坐标系
-	if (origin.type != KIN_COORD)
+	//转化为基础坐标系
+	if (origin.type != BASE_COORD)
 	{
 		double buf(0.0);
 		uint32_t index(origin.type);
@@ -472,9 +482,9 @@ void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 		buffer.position.y =  buf;
 
 		//Pitch
-					  buf = buffer.position.x * cos(angleY) - buffer.position.z * sin(angleY);
-		buffer.position.z = buffer.position.x * sin(angleY) + buffer.position.z * cos(angleY);
-		buffer.position.x = buf;
+					  buf =	 buffer.position.x * cos(angleY) - buffer.position.z * sin(angleY);
+		buffer.position.z =	 buffer.position.x * sin(angleY) + buffer.position.z * cos(angleY);
+		buffer.position.x =	 buf;
 
 		//Yaw
 					  buf =  buffer.position.x * cos(angleZ) + buffer.position.y * sin(angleZ);
@@ -482,8 +492,15 @@ void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 		buffer.position.x =  buf;
 
 		buffer.position.x += g_pTransfMatrix[index].t.x;
-		buffer.position.y += g_pTransfMatrix[index].t.y; 
+		buffer.position.y += g_pTransfMatrix[index].t.y;
 		buffer.position.z += g_pTransfMatrix[index].t.z;
+
+		if (g_pTransfMatrix[index].zoom != 0 && g_pTransfMatrix[index].zoom != 1)
+		{
+			buffer.position.x /= g_pTransfMatrix[index].zoom;
+			buffer.position.y /= g_pTransfMatrix[index].zoom;
+			buffer.position.z /= g_pTransfMatrix[index].zoom;
+		}
 	}
 
 	target.position.x = buffer.position.x;
@@ -491,13 +508,20 @@ void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 	target.position.z = buffer.position.z;
 
 	//转化为目标坐标系
-	if (target.type != KIN_COORD)
+	if (target.type != BASE_COORD)
 	{
 		double buf(0.0);
 		uint32_t index(target.type);
 		double angleX(-g_pTransfMatrix[index].r.x);
 		double angleY(-g_pTransfMatrix[index].r.y);
 		double angleZ(-g_pTransfMatrix[index].r.z);
+
+		if (g_pTransfMatrix[index].zoom != 0 && g_pTransfMatrix[index].zoom != 1)
+		{
+			target.position.x *= g_pTransfMatrix[index].zoom;
+			target.position.y *= g_pTransfMatrix[index].zoom;
+			target.position.z *= g_pTransfMatrix[index].zoom;
+		}
 
 		target.position.x -= g_pTransfMatrix[index].t.x;
 		target.position.y -= g_pTransfMatrix[index].t.y;
@@ -509,19 +533,18 @@ void ConvertTwoCoordinate(const ROCKS_COORD &origin, ROCKS_COORD &target)
 		target.position.x =  buf;
 
 		//Pitch
-					  buf = target.position.x * cos(angleY) - target.position.z * sin(angleY);
-		target.position.z = target.position.x * sin(angleY) + target.position.z * cos(angleY);
-		target.position.x = buf;
+					  buf =  target.position.x * cos(angleY) - target.position.z * sin(angleY);
+		target.position.z =  target.position.x * sin(angleY) + target.position.z * cos(angleY);
+		target.position.x =  buf;
 
 		//Roll
 					  buf =  target.position.y * cos(angleX) + target.position.z * sin(angleX);
 		target.position.z = -target.position.y * sin(angleX) + target.position.z * cos(angleX);
 		target.position.y =  buf;
-
 	}
 }
 
-bool SetCameraMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
+static bool SetCameraMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
 {
 	if (g_pTransfMatrix)
 	{
@@ -538,32 +561,36 @@ bool SetCameraMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
 		return false;
 }
 
-bool SetTargetMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
+static bool SetTargetMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r)
 {
 	if (g_pTransfMatrix)
 	{
 		g_pTransfMatrix[TARGET_COORD].r.x = r.x;
 		g_pTransfMatrix[TARGET_COORD].r.y = r.y;
 		g_pTransfMatrix[TARGET_COORD].r.z = r.z;
+
 		g_pTransfMatrix[TARGET_COORD].t.x = t.x;
 		g_pTransfMatrix[TARGET_COORD].t.y = t.y;
 		g_pTransfMatrix[TARGET_COORD].t.z = t.z;
+
 		return true;
 	}
 	else
 		return false;
 }
 
-bool SetBeltMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r, const double &beltLenght, const double encoderMinRange, const double encoderMaxRange)
+static bool SetBeltMatrix(const ROCKS_E3_VECTOR &t, const ROCKS_E3_VECTOR &r, const double &beltLenght, const double encoderMinRange, const double encoderMaxRange)
 {						
 	if (g_pTransfMatrix)
 	{
 		g_pTransfMatrix[BELT_COORD].r.x = r.x;
 		g_pTransfMatrix[BELT_COORD].r.y = r.y;
 		g_pTransfMatrix[BELT_COORD].r.z = r.z;
+
 		g_pTransfMatrix[BELT_COORD].t.x = t.x;
 		g_pTransfMatrix[BELT_COORD].t.y = t.y;
 		g_pTransfMatrix[BELT_COORD].t.z = t.z;
+
 		return true;
 	}
 	else

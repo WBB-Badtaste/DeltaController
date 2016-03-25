@@ -16,11 +16,23 @@
     <Filter Include="Header Files\RocksEx">
       <UniqueIdentifier>{0a027ca7-686f-4b7c-8448-ba3c6d4afac3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\OpenGL">
-      <UniqueIdentifier>{6f6a9246-0550-4f17-a07b-a9586de55b01}</UniqueIdentifier>
+    <Filter Include="cwVision">
+      <UniqueIdentifier>{a38cfbf7-bef6-4b5b-b75f-945ec927d1cb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\OpenGL">
-      <UniqueIdentifier>{b2f9bffa-02d7-475b-96bf-5729205f32e8}</UniqueIdentifier>
+    <Filter Include="Header Files\Modbus">
+      <UniqueIdentifier>{3507c8c6-ad75-4634-8dba-9ae01f9b6395}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Modbus">
+      <UniqueIdentifier>{f6c181d6-9a54-4f06-883b-d000753baf86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Controller">
+      <UniqueIdentifier>{38ec9aac-e0bb-4532-ab59-38f72c8f2d58}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MotionState">
+      <UniqueIdentifier>{2676b50d-f263-4355-8365-f6582dbb6de7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MotionState">
+      <UniqueIdentifier>{0252b431-87bf-4248-846e-7d4b3f6c6469}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -46,12 +58,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AxisControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Defines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CoordinateAlgorithm.h">
@@ -81,20 +87,47 @@
     <ClInclude Include="SpiralTrajAlgorithm.h">
       <Filter>Header Files\RocksEx</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Drawer.h">
-      <Filter>Header Files\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Painter.h">
-      <Filter>Header Files\OpenGL</Filter>
-    </ClInclude>
     <ClInclude Include="CoordinateStructs.h">
       <Filter>Header Files\RocksEx</Filter>
     </ClInclude>
-    <ClInclude Include="RocksControl.h">
+    <ClInclude Include="cwvision\BaslerCamera.h">
+      <Filter>cwVision</Filter>
+    </ClInclude>
+    <ClInclude Include="cwvision\CWVision.h">
+      <Filter>cwVision</Filter>
+    </ClInclude>
+    <ClInclude Include="cwvision\ImageDib.h">
+      <Filter>cwVision</Filter>
+    </ClInclude>
+    <ClInclude Include="cwvision\SMT1408CameraOperate.h">
+      <Filter>cwVision</Filter>
+    </ClInclude>
+    <ClInclude Include="cwvision\VisionCW.h">
+      <Filter>cwVision</Filter>
+    </ClInclude>
+    <ClInclude Include="Dialog_Coordinate.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ModBus\ComController.h">
+      <Filter>Header Files\Modbus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ModBus\CRC_Algorithm.h">
+      <Filter>Header Files\Modbus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ModBus\ModbusController.h">
+      <Filter>Header Files\Modbus</Filter>
+    </ClInclude>
+    <ClInclude Include="AxisControl.h">
+      <Filter>Header Files\Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="RocksControl.h">
+      <Filter>Header Files\Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="MotionStateMach.h">
+      <Filter>Header Files\MotionState</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines.h">
+      <Filter>Header Files\MotionState</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -107,19 +140,42 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Source Files\OpenGL</Filter>
+    <ClCompile Include="cwvision\SMT1408CameraOperate.cpp">
+      <Filter>cwVision</Filter>
     </ClCompile>
-    <ClCompile Include="Drawer.cpp">
-      <Filter>Source Files\OpenGL</Filter>
+    <ClCompile Include="Dialog_Coordinate.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Painter.cpp">
-      <Filter>Source Files\OpenGL</Filter>
+    <ClCompile Include="..\ModBus\ComController.cpp">
+      <Filter>Source Files\Modbus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ModBus\CRC_Algorithm.cpp">
+      <Filter>Source Files\Modbus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ModBus\ModbusController.cpp">
+      <Filter>Source Files\Modbus</Filter>
+    </ClCompile>
+    <ClCompile Include="MotionStateMach.cpp">
+      <Filter>Source Files\MotionState</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DeltaController.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="cwvision\BaslerCamera.lib">
+      <Filter>cwVision</Filter>
+    </Library>
+    <Library Include="cwvision\CWVision.lib">
+      <Filter>cwVision</Filter>
+    </Library>
+    <Library Include="cwvision\Image.lib">
+      <Filter>cwVision</Filter>
+    </Library>
+    <Library Include="cwvision\VisionCW.lib">
+      <Filter>cwVision</Filter>
+    </Library>
   </ItemGroup>
 </Project>

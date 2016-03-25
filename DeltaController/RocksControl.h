@@ -1,10 +1,21 @@
+/**
+*Copyright (C), 2015-2016, Shenzhen Sunet Industry co.,Ltd.
+*@file  文件名，存储编码格式说明（ANSI、UNICODE、UTF8等）
+*@brief 概要说明
+*@author JoMar[sos901012@gmail.com]
+*@version 0.1
+*@date 2016-01-22
+*
+*/
+
+
 #pragma once
 
 #include "Defines.h"
 #include "RocksExtern_Delta.h"
 #include "RocksExtren_Spiral.h"
 
-ROCKS_MECH  m_mech;
+static ROCKS_MECH  m_mech;
 
 typedef struct cartesianCoordinate
 {
@@ -20,7 +31,18 @@ typedef struct trajectoryPars
 	double splineTime;
 }TRAJ_PARS;
 
-NYCE_STATUS RocksInitDelta(const uint32_t &axesNum, const SAC_AXIS* const axId)
+
+/**
+*
+*	@brief 
+*
+*	@author JoMar[sos901012@gmail.com]
+*
+*	@date 2016-01-22
+*
+*
+*/
+static NYCE_STATUS RocksInitDelta(const uint32_t &axesNum, const SAC_AXIS* const axId)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
@@ -43,22 +65,30 @@ NYCE_STATUS RocksInitDelta(const uint32_t &axesNum, const SAC_AXIS* const axId)
 // 	double f = 105;    
 // 	double re = 194;
 // 	double rf = 90;
-	double e = 65;     
-	double f = 220;    
-	double re = 650;
-	double rf = 330;
+
+//相聚本体
+// 	double e = 65;     
+// 	double f = 220;    
+// 	double re = 650;
+// 	double rf = 330;
+
+	double e = 70;  
+	double f = 220; 
+	double re = 1000;
+	double rf = 400;
 
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetMechParsDelta(f, e, rf, re);
 
-/*	double rate_angle2pu = 131072 * 11 / (2 * M_PI);*/
-	double rate_angle2pu_robot = 131072 * 40 / (2 * M_PI);
+/*	double rate_angle2pu = 131072 * 11 / (2 * M_PI);//山洋机器人*/
+/*	double rate_angle2pu_robot = 131072 * 40 / (2 * M_PI);//相聚机器人*/
+	double rate_angle2pu_robot = 131072 * 33 / (2 * M_PI);//大族机器人
 	double rate_angle2pu_belta = 131072 * 5 / (2 * M_PI);
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetPuRateDelta(rate_angle2pu_robot, rate_angle2pu_belta);
 
 	return nyceStatus;
 }
 
-NYCE_STATUS RocksInitCartesian(const uint32_t &axesNum, const SAC_AXIS* const axId)
+static NYCE_STATUS RocksInitCartesian(const uint32_t &axesNum, const SAC_AXIS* const axId)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
@@ -80,7 +110,7 @@ NYCE_STATUS RocksInitCartesian(const uint32_t &axesNum, const SAC_AXIS* const ax
 	return nyceStatus;
 }
 
-NYCE_STATUS RocksTerm()
+static NYCE_STATUS RocksTerm()
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
@@ -109,7 +139,7 @@ NYCE_STATUS RocksTerm()
 	return nyceStatus;
 }
 
-NYCE_STATUS RocksPtpDelta(const ROCKS_COORD &rocksCoord, const TRAJ_PARS &trajPars, BOOL bRelative = FALSE, const double timeout = SAC_INDEFINITE)
+static NYCE_STATUS RocksPtpDelta(const ROCKS_COORD &rocksCoord, const TRAJ_PARS &trajPars, BOOL bRelative = FALSE, const double timeout = SAC_INDEFINITE)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
@@ -161,7 +191,7 @@ NYCE_STATUS RocksPtpDelta(const ROCKS_COORD &rocksCoord, const TRAJ_PARS &trajPa
 
 
 //centerOffset是圆形轨迹中心相对起始位置的偏移量
-NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const double &angle, const TRAJ_PARS &trajPars, const double &timeout = SAC_INDEFINITE, const int &repeatTimes = -1)
+static NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const double &angle, const TRAJ_PARS &trajPars, const double &timeout = SAC_INDEFINITE, const int &repeatTimes = -1)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
@@ -261,7 +291,7 @@ NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const double &
 
 	return nyceStatus;
 }
-NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, const double &angle, const TRAJ_PARS &trajPars, const double &timeout = SAC_INDEFINITE, const int &repeatTimes = -1)
+static NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, const double &angle, const TRAJ_PARS &trajPars, const double &timeout = SAC_INDEFINITE, const int &repeatTimes = -1)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
@@ -364,7 +394,7 @@ NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, const doub
 	return nyceStatus;	
 }
 
-const double DOOR_SPLINETIME = 0.001;
+//const double DOOR_SPLINETIME = 0.0005;
 const double DOOR_SPEED = 500;
 const double DOOR_ACC = DOOR_SPEED * 100;
 const double DOOR_HEIGHT = 20;
@@ -376,16 +406,16 @@ const double DOOR_FILLET = 40;
 // const double OPT_DOOR_POINT_3[3] = { 25,0,-170};
 // const double OPT_DOOR_POINT_4[3] = { 65,0,-220};
 
-const double OPT_DOOR_POINT_1[3] = {-65,0,-320};
-const double OPT_DOOR_POINT_2[3] = {-25,0,-270};
-const double OPT_DOOR_POINT_3[3] = { 25,0,-270};
-const double OPT_DOOR_POINT_4[3] = { 65,0,-320};	
+static const double OPT_DOOR_POINT_1[3] = {-65,0,-320};
+static const double OPT_DOOR_POINT_2[3] = {-25,0,-270};
+static const double OPT_DOOR_POINT_3[3] = { 25,0,-270};
+static const double OPT_DOOR_POINT_4[3] = { 65,0,-320};	
 
-ROCKS_TRAJ_SEGMENT_START_PARS segStartPars;
-ROCKS_TRAJ_SEGMENT_LINE_PARS segLinePars1,segLinePars2,segLinePars3,segLinePars4;
-ROCKS_TRAJ_SEGMENT_ARC_PARS segArcPars1,segArcPars2;
+static ROCKS_TRAJ_SEGMENT_START_PARS segStartPars;
+static ROCKS_TRAJ_SEGMENT_LINE_PARS segLinePars1,segLinePars2,segLinePars3,segLinePars4;
+static ROCKS_TRAJ_SEGMENT_ARC_PARS segArcPars1,segArcPars2;
 
-NYCE_STATUS RocksDoorDelta()
+static NYCE_STATUS RocksDoorDelta()
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 	ROCKS_KIN_INV_PARS kinPars;
@@ -397,7 +427,7 @@ NYCE_STATUS RocksDoorDelta()
 
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinDeltaPosition(&m_mech, segStartPars.startPos);
 
-	segStartPars.splineTime = DOOR_SPLINETIME;
+	segStartPars.splineTime = 0.002;
 	segStartPars.maxNrOfSplines = 0;
 	segStartPars.pPositionSplineBuffer = NULL;
 	segStartPars.pVelocitySplineBuffer = NULL;
@@ -475,15 +505,15 @@ NYCE_STATUS RocksDoorDelta()
 	return nyceStatus;
 }
 
-const double DOOR_EX_SPLINETIME = 0.01;
-const double DOOR_EX_SPEED = 100;
-const double DOOR_EX_ACC = DOOR_SPEED * 100;
-const double SPIRAL_MAX_RADIAL_SPEED = 100;
-const double SPIRAL_MAX_RADIAL_ACC = SPIRAL_MAX_RADIAL_SPEED * 100;
+static const double DOOR_EX_SPLINETIME = 0.01;
+static const double DOOR_EX_SPEED = 100;
+static const double DOOR_EX_ACC = DOOR_SPEED * 100;
+static const double SPIRAL_MAX_RADIAL_SPEED = 100;
+static const double SPIRAL_MAX_RADIAL_ACC = SPIRAL_MAX_RADIAL_SPEED * 100;
 
-ROCKS_TRAJ_SEGMENT_SPIRAL_PARS_EX segSpiralPars1, segSpiralPars2, segSpiralPars3, segSpiralPars4;
+static ROCKS_TRAJ_SEGMENT_SPIRAL_PARS_EX segSpiralPars1, segSpiralPars2, segSpiralPars3, segSpiralPars4;
 
-NYCE_STATUS RocksSpiralExDoorDelta()
+static NYCE_STATUS RocksSpiralExDoorDelta()
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 	ROCKS_KIN_INV_PARS kinPars;
@@ -637,11 +667,16 @@ typedef struct doorTrajPars
 	TRAJ_PARS trajPars;
 }DOOR_TRAJ_PARS;
 
-// ROCKS_TRAJ_SEGMENT_START_PARS segStartPars;
-// ROCKS_TRAJ_SEGMENT_LINE_PARS segLinePars1, segLinePars2, segLinePars3;
-// ROCKS_TRAJ_SEGMENT_ARC_PARS segArcPars1, segArcPars2;
+/**
+*	@author JoMar
+*	@date 2016-01-22
+*	@brief Control Delta-Robot to complete the door type path movement.
+*	@param [in] doorPars - The informations of the door type path.
+*	@param [in] timeout - The time limitation of waiting Delta-Robot to complete the path.
+*	@return NYCE_STATUS
+*/
 
-NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout = SAC_INDEFINITE)
+static NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout = SAC_INDEFINITE)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
@@ -649,20 +684,23 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	const double distance(sqrt((doorPars.endPos.position.x - doorPars.startPos.position.x) * (doorPars.endPos.position.x - doorPars.startPos.position.x) + (doorPars.endPos.position.y - doorPars.startPos.position.y) * (doorPars.endPos.position.y - doorPars.startPos.position.y)));
 
 	//速度比率
-	const double velRatio1(doorPars.riseHeight / distance * 2);
-	const double velRatio2((-(doorPars.endPos.position.z - doorPars.startPos.position.z) +  doorPars.riseHeight) / distance * 2);
+	const double velRatio1(doorPars.riseHeight / (distance / 2 + doorPars.riseHeight));
+	const double velRatio2((-(doorPars.endPos.position.z - doorPars.startPos.position.z) +  doorPars.riseHeight) / (distance / 2 + (-(doorPars.endPos.position.z - doorPars.startPos.position.z) +  doorPars.riseHeight)));
 
 	//始末点连线在水平面的投影方向
 	const double angleZ(atan2(doorPars.endPos.position.y - doorPars.startPos.position.y, doorPars.endPos.position.x - doorPars.startPos.position.x));
 	
+	//获取机器人当前位置
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinDeltaPosition(&m_mech, segStartPars.startPos);
 
-	segStartPars.splineTime = DOOR_SPLINETIME;
+	//设置路径的起始位置和相关参数
+	segStartPars.splineTime = doorPars.trajPars.splineTime;
 	segStartPars.maxNrOfSplines = 0;
 	segStartPars.pPositionSplineBuffer = NULL;
 	segStartPars.pVelocitySplineBuffer = NULL;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentStart(&m_mech, &segStartPars);
 
+	//设置上升段直线路径
 	segLinePars1.plane = ROCKS_PLANE_ZX;
 	segLinePars1.endPos[0] = doorPars.startPos.position.x;
 	segLinePars1.endPos[1] = doorPars.startPos.position.z + doorPars.riseHeight - doorPars.radius;
@@ -670,6 +708,7 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	segLinePars1.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars1);
 
+	//设置转向路径
 	segArcPars1.plane = ROCKS_PLANE_ZX;
 	segArcPars1.center[0] = segLinePars1.endPos[0] + doorPars.radius;
 	segArcPars1.center[1] = segLinePars1.endPos[1];
@@ -680,13 +719,15 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	segArcPars1.positiveAngle = TRUE;//注意旋转方向
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentArc(&m_mech, &segArcPars1);
 
+	//设置加速平移路径
 	segLinePars2.plane = ROCKS_PLANE_ZX;
 	segLinePars2.endPos[0] = segArcPars1.endPos[0] + distance * 0.5 - doorPars.radius;
 	segLinePars2.endPos[1] = segArcPars1.endPos[1];
-	segLinePars2.endVelocity = doorPars.trajPars.velocity * (1 - velRatio1);
+	segLinePars2.endVelocity = doorPars.trajPars.velocity;
 	segLinePars2.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars2);
 
+	//设置减速平移路径
 	segLinePars3.plane = ROCKS_PLANE_ZX;
 	segLinePars3.endPos[0] = segLinePars2.endPos[0] + distance * 0.5 - doorPars.radius;
 	segLinePars3.endPos[1] = segLinePars2.endPos[1];
@@ -694,6 +735,7 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	segLinePars3.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars3);
 	
+	//设置转向路径
 	segArcPars2.plane = ROCKS_PLANE_ZX;
 	segArcPars2.center[0] = segLinePars3.endPos[0];
 	segArcPars2.center[1] = segLinePars3.endPos[1] - doorPars.radius;
@@ -704,6 +746,7 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	segArcPars2.positiveAngle = TRUE;//注意旋转方向
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentArc(&m_mech, &segArcPars2);
 
+	//设置下降路径
 	segLinePars4.plane = ROCKS_PLANE_ZX;
 	segLinePars4.endPos[0] = segArcPars2.endPos[0];
 	segLinePars4.endPos[1] = doorPars.endPos.position.z;
@@ -711,6 +754,7 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 	segLinePars4.maxAcceleration = doorPars.trajPars.acceleration;
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSegmentLine(&m_mech, &segLinePars4);
 
+	//设置整体偏移
 	ROCKS_POSE pose;
 	pose.r.x = 0;
 	pose.r.y = 0;
@@ -732,12 +776,12 @@ NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout
 
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStreamSynchronize( &m_mech, timeout );
 
-	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinResetOrigin(&m_mech);
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinResetOrigin( &m_mech );
 
 	return nyceStatus;
 }
 
-NYCE_STATUS RocksSetHomePos(const ROCKS_COORD &rocksCoord)
+static NYCE_STATUS RocksSetHomePos(const ROCKS_COORD &rocksCoord)
 {
 	g_bInitHomePos = TRUE;
 	g_homePos.type = KIN_COORD;
@@ -746,7 +790,7 @@ NYCE_STATUS RocksSetHomePos(const ROCKS_COORD &rocksCoord)
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksSetPlacePos(const ROCKS_COORD &rocksCoord)
+static NYCE_STATUS RocksSetPlacePos(const ROCKS_COORD &rocksCoord)
 {
 	g_homePos.type = KIN_COORD;
 	ConvertTwoCoordinate(rocksCoord, g_placePos);
@@ -754,35 +798,48 @@ NYCE_STATUS RocksSetPlacePos(const ROCKS_COORD &rocksCoord)
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksHomeDelta(const TRAJ_PARS &trajPars)
+static NYCE_STATUS RocksHomeDelta(const TRAJ_PARS &trajPars)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	double joinPos[3];
-	joinPos[0] = 0.0;
-	joinPos[1] = 0.0;
-	joinPos[2] = 0.0;
-
 	if (!g_bInitHomePos)
 	{
-		double cartesianPos[3];
+		double joinPos[6];
+		joinPos[0] = 0.0;
+		joinPos[1] = 0.0;
+		joinPos[2] = 0.0;
+
+		double cartesianPos[6];
+		ZeroMemory(cartesianPos, 6 * sizeof(double));
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksKinForwardDelta(&m_mech, joinPos, cartesianPos);
 
 		ROCKS_COORD ptpPos;
 		ptpPos.position.x = cartesianPos[0];
 		ptpPos.position.y = cartesianPos[1];
-		ptpPos.position.z = cartesianPos[2] - 150;
+		ptpPos.position.z = cartesianPos[2] + 80;
 		ptpPos.type = KIN_COORD;
 
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetHomePos(ptpPos);
 	}
-	
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(g_homePos, trajPars);
+
+	double curCarPos[6];
+	ZeroMemory(curCarPos, ROCKS_MECH_MAX_DOF * sizeof(double));
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksKinDeltaPosition(&m_mech, curCarPos);
+
+	if (curCarPos[0] - g_homePos.position.x >  1 ||
+		curCarPos[1] - g_homePos.position.y >  1 ||
+		curCarPos[2] - g_homePos.position.z >  1 ||
+		curCarPos[0] - g_homePos.position.x < -1 ||
+		curCarPos[1] - g_homePos.position.y < -1 ||
+		curCarPos[2] - g_homePos.position.z < -1 )
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(g_homePos, trajPars);
+	else
+		return NYCE_OK;
 	
 	return nyceStatus;
 }
 
-NYCE_STATUS RocksReadPosDelta(double *position)
+static NYCE_STATUS RocksReadPosDelta(double *position)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
@@ -791,82 +848,39 @@ NYCE_STATUS RocksReadPosDelta(double *position)
 	return nyceStatus;
 }
 
-
-// void CALLBACK ReadBeltPosFun(UINT wTimerID, UINT msg, DWORD dwUser, DWORD dwl, DWORD dw2)
-// {
-// 	double pos(0.0);
-// 
-// 	//读取传送带编码器值,并存入20位的队列
-// 	if (NyceSuccess(SacReadVariable(axId[4], SAC_VAR_AXIS_POS, &pos)))//注意传送带的长度有限
-// 	{
-// 		if (g_beltPos_index == NUM_BELTPOS_QUE - 1)
-// 			for (uint32_t i = 0; i < g_beltPos_index;)
-// 				g_beltPos[i] = g_beltPos[++i];
-// 		else
-// 			++g_beltPos_index;
-// 
-// 		g_beltPos[g_beltPos_index] = pos;
-// 	}
-// 
-// 	//计算速度
-// 	g_beltVel = g_beltPos_index ? (g_beltPos[g_beltPos_index] - g_beltPos[0]) / g_readBeltPos_delayTime * 1000 / g_beltPos_index : 0;
-// }
-// 
-// NYCE_STATUS RocksReadBeltEncoderVal(double &vel, double &pos)//获取编码器位置和速度
-// {	
-// 	if(g_wTimerID == 0)
-// 		return ROCKS_ERR_READ_BELT_POS_FAIL;
-// 
-// 	vel = g_beltVel;
-// 	pos = g_beltPos[g_beltPos_index];
-// 
-// 	return NYCE_OK;
-// }
-
-// NYCE_STATUS	RocksCatchTarget(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD &coord)
-// {
-// 	NYCE_STATUS nyceStatus(NYCE_OK);
-// 
-// 	ROCKS_COORD kinCoord;
-// 	kinCoord.type = KIN_COORD;
-// 
-// 	ConvertTwoCoordinate(coord, kinCoord);
-// 
-// 	double time((doorPars.startPos.position.z - doorPars.endPos.position.z + doorPars.riseHeight * 2) / doorPars.trajPars.velocity * 2);
-// 
-// 	return nyceStatus;
-// }
-
-NYCE_STATUS RocksInitMatrix()
+static NYCE_STATUS RocksInitMatrix()
 {
-// 	if (!g_readingBeltPos)
-// 	{
-// 		uint32_t wTimerRes = 1;
-// 		timeBeginPeriod(wTimerRes);
-// 
-// 		g_wTimerID = timeSetEvent(g_readBeltPos_delayTime,  wTimerRes, (LPTIMECALLBACK)ReadBeltPosFun,  NULL, TIME_PERIODIC);   
-// 		Sleep(1000);
-// 	}
-// 
-// 	if(g_wTimerID == 0)
-// 		return ROCKS_ERR_READ_BELT_POS_FAIL;
-
 	g_pTransfMatrix = new TRANSF_MATRIX[NUM_COORD_TYPES]();
 
-// 	for (uint32_t i = 0; i < NUM_COORD_TYPES; i++)
-// 	{
-// 		g_pTransfMatrix[i].r.x = 0;
-// 		g_pTransfMatrix[i].r.y = 0;
-// 		g_pTransfMatrix[i].r.z = 0;
-// 		g_pTransfMatrix[i].t.x = 0;
-// 		g_pTransfMatrix[i].t.y = 0;
-// 		g_pTransfMatrix[i].t.z = 0;
-// 	}
-	
+	double x_base(0.0), y_belt(-13107200), x_camera(799.107), y_camera(726.886), z_kin(-876.43);
+	g_pTransfMatrix[CAMERA_COORD].r.x	= 0;
+	g_pTransfMatrix[CAMERA_COORD].r.y	= M_PI;
+	g_pTransfMatrix[CAMERA_COORD].r.z	= -0.014813;
+	g_pTransfMatrix[CAMERA_COORD].t.x	= x_camera * cos(g_pTransfMatrix[CAMERA_COORD].r.z) - y_camera * sin(g_pTransfMatrix[CAMERA_COORD].r.z);
+	g_pTransfMatrix[CAMERA_COORD].t.y	= y_belt / BELT_BASE_RATE * PIXEL_BASE_RATE - x_camera * sin(g_pTransfMatrix[CAMERA_COORD].r.z) - y_camera * cos(g_pTransfMatrix[CAMERA_COORD].r.z);
+	g_pTransfMatrix[CAMERA_COORD].t.z	= z_kin / KIN_BASE_RATE * PIXEL_BASE_RATE;
+	g_pTransfMatrix[CAMERA_COORD].zoom	= PIXEL_BASE_RATE;
+
+	g_pTransfMatrix[KIN_COORD].zoom = KIN_BASE_RATE;
+
+	g_pTransfMatrix[BELT_COORD].zoom = BELT_BASE_RATE;
+
+// 	ROCKS_COORD test_camera, test_blet, test_kin;
+// 	test_camera.type = CAMERA_COORD;
+// 	test_blet.type = BELT_COORD;
+// 	test_kin.type = KIN_COORD;
+// 	test_camera.position.x = x_camera;
+// 	test_camera.position.y = y_camera;
+// 	test_camera.position.z = 0;
+// 	ConvertTwoCoordinate(test_camera, test_blet);
+// 	ConvertTwoCoordinate(test_camera, test_kin);
+// 	ConvertTwoCoordinate(test_kin, test_camera );
+// 	ConvertTwoCoordinate(test_kin, test_camera);
+
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksTermMatrix()
+static NYCE_STATUS RocksTermMatrix()
 {
 
 //	timeKillEvent(g_wTimerID);
@@ -876,25 +890,37 @@ NYCE_STATUS RocksTermMatrix()
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD &cuTargetPos_belt, ROCKS_COORD &meetingPos_kin)
+/**
+*	@author JoMar
+*	@date 2016-01-21
+*	@brief This is a function calculating the position where Delta-Robot can catch up and pick up the target at.
+*	@param [in] motionPars - The parameters of motion of the door trajectory 
+*	@param [in] placeTargetPos_kin - The position in kinematic coordinate system of the target where the Delta-Robot place it on the belt.
+*	@param [in] endBufHeightOffset - The height offset which use to keep some time to calculate and finish the second motion. It can improve the accuracy.
+*	@param [out] meetingPos_kin - The position in kinematic coordinate system of the target where the Delta-Robot can catch it up.
+*/
+static NYCE_STATUS RocksCalcCatchPos(const TRAJ_PARS &motionPars, const ROCKS_COORD &placeRobotPos_kin, const ROCKS_COORD &placeTargetPos_kin, const double endBufHeightOffset, ROCKS_COORD &meetingPos_kin)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
 	//读取当前的皮带编码器位置和速度
 	double encoderVel, encoderPos;
-	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : SacReadVariable(SAC_VAR_AXIS_VEL, beltId[0], &encoderVel);
-	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : SacReadVariable(SAC_VAR_AXIS_POS, beltId[0], &encoderPos);
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : SacReadVariable(beltId[0], SAC_VAR_AXIS_VEL, &encoderVel);
+	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : SacReadVariable(beltId[0], SAC_VAR_AXIS_POS, &encoderPos);
 
-	//目标在机构坐标系的位置
+	//目标在机构坐标系的当前位置
+	double moveLen = (encoderPos - placeTargetPos_kin.cuEncoderValue) / BELT_BASE_RATE;//相对放置点而言，目标已经向前行了一段距离
 	ROCKS_COORD cuTargetPos_kin;
 	cuTargetPos_kin.type = KIN_COORD;
-	ConvertTwoCoordinate(cuTargetPos_belt, cuTargetPos_kin);
+	cuTargetPos_kin.position.x = placeTargetPos_kin.position.x;
+	cuTargetPos_kin.position.y = placeTargetPos_kin.position.y + moveLen * KIN_BASE_RATE;
+	cuTargetPos_kin.position.z = placeTargetPos_kin.position.z + endBufHeightOffset * KIN_BASE_RATE;
 
 	//传送带在皮带坐标系中的速度
 	ROCKS_COORD beltVel_belt;
 	beltVel_belt.type = BELT_COORD;
-	beltVel_belt.position.x = g_beltLenght * encoderVel / (g_encoderMaxRange - g_encoderMinRange);
-	beltVel_belt.position.y = 0;
+	beltVel_belt.position.x = 0;
+	beltVel_belt.position.y = encoderVel;
 	beltVel_belt.position.z = 0;
 
 	//传送带在机构坐标系中的速度
@@ -902,24 +928,22 @@ NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD 
 	beltVel_kin.type = KIN_COORD;
 	ConvertTwoCoordinate(beltVel_belt, beltVel_kin);
 
-	//抓取位置阈值
-	ROCKS_COORD threshold_belt;
-	threshold_belt.type = BELT_COORD; 
-	threshold_belt.position.x = 10;
-	threshold_belt.position.y = 0;
-	threshold_belt.position.z = 0;
+	//计算由于时间残生的目标位置误差
 	ROCKS_COORD threshold_kin;
 	threshold_kin.type = KIN_COORD;
-	ConvertTwoCoordinate(threshold_belt, threshold_kin);
+	threshold_kin.position.x = beltVel_kin.position.x * THRESHOLD_TIME;
+	threshold_kin.position.y = beltVel_kin.position.y * THRESHOLD_TIME;
+	threshold_kin.position.z = beltVel_kin.position.z * THRESHOLD_TIME;
 
 	//方程参数简化
-	double parX(doorPars.startPos.position.x - cuTargetPos_kin.position.x - threshold_kin.position.x);
-	double parY(doorPars.startPos.position.y - cuTargetPos_kin.position.y - threshold_kin.position.y);
-	double parZ(doorPars.startPos.position.z - cuTargetPos_kin.position.z - threshold_kin.position.z + doorPars.riseHeight * 2);
+	double parX(placeRobotPos_kin.position.x - cuTargetPos_kin.position.x);
+	double parY(placeRobotPos_kin.position.y - cuTargetPos_kin.position.y); 
+	double parZ(placeRobotPos_kin.position.z - cuTargetPos_kin.position.z);
+
 
 	//计算参数项
-	double A((doorPars.trajPars.velocity / 2 + beltVel_kin.position.z) - beltVel_kin.position.x * beltVel_kin.position.x - beltVel_kin.position.y * beltVel_kin.position.y);
-	double B(doorPars.trajPars.velocity * parZ + 2 * beltVel_kin.position.z * parZ - 2 * beltVel_kin.position.x * parX - beltVel_kin.position.y * parY);
+	double A(beltVel_kin.position.x * beltVel_kin.position.x + beltVel_kin.position.y * beltVel_kin.position.y - motionPars.velocity * motionPars.velocity / 4 );
+	double B(-2 * (parX * beltVel_kin.position.x + parY * beltVel_kin.position.y + parZ * beltVel_kin.position.z));
 	double C(parX * parX + parY * parY + parZ * parZ);
 
 	//韦达定理计算时间
@@ -932,33 +956,90 @@ NYCE_STATUS RocksCalcCatchPos(const DOOR_TRAJ_PARS &doorPars, const ROCKS_COORD 
 	{
 		x1 = (sqrt(delta) - B) / 2 / A;
 		if (x1 < 0)
-			return ROCKS_ERR_CALC_CATCH_POS_FAIL;			
+			return ROCKS_ERR_CALC_CATCH_POS_FAIL;
 		else time = x1;
-
 	}
 	else
 	{
-		x1 = (sqrt(delta) - B) / 2 / A;
+		x1 = ( sqrt(delta) - B) / 2 / A;
 		x2 = (-sqrt(delta) - B) / 2 / A;
-		if ((x1 > 0 && x2 > 0) || (x1 < 0 && x2 < 0))
+		if (x1 <= 0 && x2 <= 0)
 			return ROCKS_ERR_CALC_CATCH_POS_FAIL;
 		else 
-			time = x1 > 0 ? x1 : x2; 
+			time = max(x1, x2);
 	}
 
 	//计算相遇点
-	meetingPos_kin.position.x = cuTargetPos_kin.position.x + beltVel_kin.position.x * time;
-	meetingPos_kin.position.y = cuTargetPos_kin.position.y + beltVel_kin.position.y * time;
-	meetingPos_kin.position.z = cuTargetPos_kin.position.z + beltVel_kin.position.z * time;
+	meetingPos_kin.position.x = cuTargetPos_kin.position.x + beltVel_kin.position.x * time + threshold_kin.position.x;
+	meetingPos_kin.position.y = cuTargetPos_kin.position.y + beltVel_kin.position.y * time + threshold_kin.position.y;
+	meetingPos_kin.position.z = cuTargetPos_kin.position.z + beltVel_kin.position.z * time + threshold_kin.position.z;
 
-	//这里添加判断是否在抓取区?????
+	//这里添加判断是否在抓取区
 
 	return nyceStatus;
 }
 
-NYCE_STATUS RocksGetTargetPos(ROCKS_COORD &targetPos)
+
+//暂时使用
+static NYCE_STATUS RocksSetTargetPos()
+{
+
+// 	for (uint32_t i = 0; i < NUM_TARGETS; ++i)
+// 	{
+// 		g_targetPos[i].type = BELT_COORD;
+// 		g_targetPos[i].position.x = ;
+// 		g_targetPos[i].position.y = ;
+// 		g_targetPos[i].position.z = 0;
+// 		g_targetPos[i].cuEncoderValue = 
+// 	}
+
+	return NYCE_OK;
+}
+
+static NYCE_STATUS RocksGetTargetPos(ROCKS_COORD &targetPos)
 {
 	NYCE_STATUS nyceSatus(NYCE_OK);
 
+	double beltPos;
+	nyceSatus = NyceError(nyceSatus) ? nyceSatus : SacReadVariable(beltId[0], SAC_VAR_AXIS_POS, &beltPos);
+
+// 	//不能计算重复长度，很不精确
+// 	int fac = beltPos;
+// 	beltPos -= fac
+// 	//过滤掉反面
+
 	return nyceSatus;
+}
+
+/**
+*	@author JoMar
+*	@date 2016-01-29
+*	@brief This is a function controlling the rotation motor.
+*	@param [in] angle - The angle which the rotation motor move with. There is no limit to the range of this value.
+*/
+static NYCE_STATUS RocksRotateAngle(const double angle)
+{
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	//将角度取值为0~360度
+	double correctAngle(angle - ((int)angle / 360) * 360.0);
+
+	//将角度取值为-180~180度
+	if (correctAngle >= 0)
+		correctAngle = correctAngle <=  180.0 ? correctAngle : correctAngle - 360.0;
+	else
+		correctAngle = correctAngle >= -180.0 ? correctAngle : correctAngle + 360.0;
+
+	const double pos(correctAngle * ROTATE_ANGLE_RATE);
+
+	SAC_PTP_PARS ptpPos_rotation;
+	ptpPos_rotation.positionReference = SAC_RELATIVE;
+	ptpPos_rotation.position = pos;
+	ptpPos_rotation.velocity = ROTATE_VEL * ROTATE_ANGLE_RATE;
+	ptpPos_rotation.acceleration = ptpPos_rotation.velocity * 10;
+	ptpPos_rotation.jerk = ptpPos_rotation.velocity * 100;
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacPointToPoint(rotationId[0], &ptpPos_rotation);
+
+	return nyceStatus;
 }

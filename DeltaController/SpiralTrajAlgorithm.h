@@ -2,7 +2,7 @@
 
 #include <math.h>
 
-void CalcArchimedeSpiralPars(const double *const startPos, const double *const endPos, const double *const center, double *const radius, double &a, double &b)
+static void CalcArchimedeSpiralPars(const double *const startPos, const double *const endPos, const double *const center, double *const radius, double &a, double &b)
 {
 	double offSet1(startPos[0] - center[0]);
 	double offSet2(startPos[1] - center[1]);
@@ -18,7 +18,7 @@ void CalcArchimedeSpiralPars(const double *const startPos, const double *const e
 	a = radius[1] - b * theta2;
 }
 
-void CalcArchimedeSpiralPars(const double &startPos1, const double &startPos2, const double &endPos1, const double &endPos2, const double &center1, const double &center2, double &radius1, double &radius2, double &a, double &b)
+static void CalcArchimedeSpiralPars(const double &startPos1, const double &startPos2, const double &endPos1, const double &endPos2, const double &center1, const double &center2, double &radius1, double &radius2, double &a, double &b)
 {
 	double offSet1(startPos1 - center1);
 	double offSet2(startPos2 - center2);
@@ -34,7 +34,7 @@ void CalcArchimedeSpiralPars(const double &startPos1, const double &startPos2, c
 	a = radius2 - b * theta2;
 }
 
-const double CalcArchimedeSpiralArcLen(const double *const radius, const double &a, const double &b)
+static const double CalcArchimedeSpiralArcLen(const double *const radius, const double &a, const double &b)
 {
 	double fac1(sqrt(radius[0] * radius[0] + b * b));
 	double fac2(sqrt(radius[1] * radius[1] + b * b));

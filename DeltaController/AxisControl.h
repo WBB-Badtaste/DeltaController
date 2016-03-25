@@ -32,6 +32,7 @@ NYCE_STATUS TermAxis(const uint32_t &axesNum, const SAC_AXIS* const axId)
 	return nyceStatus;
 }
 
+
 NYCE_STATUS InitAxisSanyo(const uint32_t &axesNum, SAC_AXIS* const axId, const char *axName[])
 {
 	SAC_SPG_STATE sacSpgState;
@@ -81,6 +82,7 @@ INACTIVE:		nyceStatus =  NyceError(nyceStatus) ? nyceStatus : SacHome( axId[ ax 
 
 				break;
 			}
+
 		}
 
 		if(NyceError(nyceStatus))
@@ -88,6 +90,7 @@ INACTIVE:		nyceStatus =  NyceError(nyceStatus) ? nyceStatus : SacHome( axId[ ax 
 	}
 	return nyceStatus;
 }
+
 
 NYCE_STATUS InitAxisRexroth(const uint32_t &axesNum, SAC_AXIS* const axId, const char *axName[])
 {
@@ -144,5 +147,6 @@ INACTIVE:
 		if(NyceError(nyceStatus))
 			return nyceStatus;
 	}
+
 	return nyceStatus;
 }

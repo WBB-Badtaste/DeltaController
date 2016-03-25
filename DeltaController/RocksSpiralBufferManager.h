@@ -2,12 +2,12 @@
 
 #include <rocksapi.h>
 
-double (*pPosSpiralSplineBuffer)[ROCKS_MECH_MAX_DOF];
-double (*pVelSpiralSplineBuffer)[ROCKS_MECH_MAX_DOF];
-uint32_t spiralBufferSize = 0;
-BOOL bSpiralBufferAlloced = FALSE;
+static double (*pPosSpiralSplineBuffer)[ROCKS_MECH_MAX_DOF];
+static double (*pVelSpiralSplineBuffer)[ROCKS_MECH_MAX_DOF];
+static uint32_t spiralBufferSize = 0;
+static BOOL bSpiralBufferAlloced = FALSE;
 
-void SpiralBufferManage(ROCKS_MECH *pMech, const uint32_t& nextBufferStartIndex)
+static void SpiralBufferManage(ROCKS_MECH *pMech, const uint32_t& nextBufferStartIndex)
 {
 	if (pMech->var.usedNrOfSplines == 0)//ÐÂµÄpath
 	{

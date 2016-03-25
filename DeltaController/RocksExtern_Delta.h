@@ -10,12 +10,12 @@ using namespace std;
 #include "CoordinateAlgorithm.h"
 #include "DeltaKinAlgorithm.h"
 
-DELTA_MECH_PARS delta_mech_pars;
-double rate_angle2pu[ROCKS_MECH_MAX_NR_OF_JOINTS];
+static DELTA_MECH_PARS delta_mech_pars;
+static double rate_angle2pu[ROCKS_MECH_MAX_NR_OF_JOINTS];
 
-HANDLE evExportDatas(CreateEvent(NULL,TRUE,FALSE,NULL));
+static HANDLE evExportDatas(CreateEvent(NULL,TRUE,FALSE,NULL));
 
-NYCE_STATUS RocksSetMechParsDelta(const double &lenOfBasePlatform, const double &lenOfTravelPlatform, const double &lenOfActiveArm, const double &lenOfPassiveArm)
+static NYCE_STATUS RocksSetMechParsDelta(const double &lenOfBasePlatform, const double &lenOfTravelPlatform, const double &lenOfActiveArm, const double &lenOfPassiveArm)
 {
 	delta_mech_pars.e = lenOfTravelPlatform;
 	delta_mech_pars.f = lenOfBasePlatform;
@@ -25,7 +25,7 @@ NYCE_STATUS RocksSetMechParsDelta(const double &lenOfBasePlatform, const double 
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksSetPuRateDelta(const double &rate_robot, const double &rate_belt)
+static NYCE_STATUS RocksSetPuRateDelta(const double &rate_robot, const double &rate_belt)
 {
 	rate_angle2pu[0] = rate_robot;
 	rate_angle2pu[1] = rate_robot;
@@ -60,7 +60,7 @@ inline void ConvertPUToAngle(const double &positionUnit, double &angle, const ui
 
 //Delta的正向坐标转换
 //pJointPos是PU值
-NYCE_STATUS RocksKinForwardDelta(ROCKS_MECH* pMech, const double pJointPos[], double pMechPos[])
+static NYCE_STATUS RocksKinForwardDelta(ROCKS_MECH* pMech, const double pJointPos[], double pMechPos[])
 {
 	if (delta_mech_pars.e <= 0 || delta_mech_pars.f <= 0 || delta_mech_pars.re <= 0 || delta_mech_pars.rf <= 0 )
 		return ROCKS_ERR_DELTA_PARS_ERROR;
@@ -85,7 +85,7 @@ NYCE_STATUS RocksKinForwardDelta(ROCKS_MECH* pMech, const double pJointPos[], do
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksKinDeltaPosition(ROCKS_MECH* pMech, double pPos[])
+static NYCE_STATUS RocksKinDeltaPosition(ROCKS_MECH* pMech, double pPos[])
 {
 	ZeroMemory(pPos, ROCKS_MECH_MAX_DOF * sizeof(double));
 	double pJointPos[ROCKS_MECH_MAX_DOF];
@@ -98,7 +98,7 @@ NYCE_STATUS RocksKinDeltaPosition(ROCKS_MECH* pMech, double pPos[])
 	return status;
 }
 
-NYCE_STATUS RocksKinInverseDelta(ROCKS_MECH* pMech, const ROCKS_KIN_INV_PARS* pKin)
+static NYCE_STATUS RocksKinInverseDelta(ROCKS_MECH* pMech, const ROCKS_KIN_INV_PARS* pKin)
 {
 	if (pMech->var.mechStep != ROCKS_MECH_STEP_VALID_PATH)
 		return ROCKS_ERR_NO_VALID_PATH;
@@ -214,7 +214,7 @@ NYCE_STATUS RocksKinInverseDelta(ROCKS_MECH* pMech, const ROCKS_KIN_INV_PARS* pK
 	return NYCE_OK;
 }
 
-NYCE_STATUS RocksExExportSplineDatas(const BOOL &signal)
+static NYCE_STATUS RocksExExportSplineDatas(const BOOL &signal)
 {
 	if (signal && WaitForSingleObject(evExportDatas, 0) != WAIT_OBJECT_0)
 		SetEvent(evExportDatas);

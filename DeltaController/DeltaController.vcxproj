@@ -40,7 +40,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -51,15 +51,17 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NT;WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\OpenGL;C:\Program Files\Rexroth\NYCe4000\dev\inc</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <AdditionalIncludeDirectories>$(SolutionDir)\ModBus;C:\Program Files\Rexroth\NYCe4000\dev\inc;$(PYLONC_ROOT)\include</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glut32.lib;nhi.lib;sac.lib;nyce.lib;n4krocks.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\OpenGL;C:\Program Files\Rexroth\NYCe4000\x86\dev\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>nhi.lib;sac.lib;nyce.lib;n4krocks.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;PylonC_MD_vc100.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\Rexroth\NYCe4000\x86\dev\lib;$(PYLONC_ROOT)\lib\win32</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -104,18 +106,25 @@
     <None Include="res\DeltaController.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\ModBus\ComController.h" />
+    <ClInclude Include="..\ModBus\CRC_Algorithm.h" />
+    <ClInclude Include="..\ModBus\ModbusController.h" />
     <ClInclude Include="AxisControl.h" />
-    <ClInclude Include="Camera.h" />
     <ClInclude Include="CoordinateAlgorithm.h" />
     <ClInclude Include="CoordinateStructs.h" />
+    <ClInclude Include="cwvision\BaslerCamera.h" />
+    <ClInclude Include="cwvision\CWVision.h" />
+    <ClInclude Include="cwvision\ImageDib.h" />
+    <ClInclude Include="cwvision\SMT1408CameraOperate.h" />
+    <ClInclude Include="cwvision\VisionCW.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="DeltaController.h" />
     <ClInclude Include="DeltaControllerDlg.h" />
     <ClInclude Include="DeltaKinAlgorithm.h" />
-    <ClInclude Include="Drawer.h" />
+    <ClInclude Include="Dialog_Coordinate.h" />
+    <ClInclude Include="MotionStateMach.h" />
     <ClInclude Include="NyceExDefs.h" />
     <ClInclude Include="NyceExErrorHandle.h" />
-    <ClInclude Include="Painter.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RocksControl.h" />
     <ClInclude Include="RocksExtern_Delta.h" />
@@ -127,11 +136,14 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="..\ModBus\ComController.cpp" />
+    <ClCompile Include="..\ModBus\CRC_Algorithm.cpp" />
+    <ClCompile Include="..\ModBus\ModbusController.cpp" />
+    <ClCompile Include="cwvision\SMT1408CameraOperate.cpp" />
     <ClCompile Include="DeltaController.cpp" />
     <ClCompile Include="DeltaControllerDlg.cpp" />
-    <ClCompile Include="Drawer.cpp" />
-    <ClCompile Include="Painter.cpp" />
+    <ClCompile Include="Dialog_Coordinate.cpp" />
+    <ClCompile Include="MotionStateMach.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -139,6 +151,12 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DeltaController.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="cwvision\BaslerCamera.lib" />
+    <Library Include="cwvision\CWVision.lib" />
+    <Library Include="cwvision\Image.lib" />
+    <Library Include="cwvision\VisionCW.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
