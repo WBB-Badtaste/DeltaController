@@ -50,7 +50,7 @@ private:
 	HANDLE m_hReadPosThread, m_hEvRPT;
 	MOTION_STATE m_status;
 	static unsigned WINAPI StateThread(void *);
-	static unsigned WINAPI ReadPosThread(void *);
+	static unsigned WINAPI AssistThread(void *);
 
 	//¹¤×÷º¯Êý
 	const uint32_t Catch();

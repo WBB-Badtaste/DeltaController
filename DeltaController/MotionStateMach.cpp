@@ -40,7 +40,7 @@ CMotionStateMach::CMotionStateMach(HWND hMainWnd)
 
 	//启动读位置线程
 	m_hEvRPT = CreateEvent(NULL, TRUE, TRUE, NULL);
-	m_hReadPosThread = (HANDLE)_beginthreadex(NULL, 0, ReadPosThread, this, 0, NULL );
+	m_hReadPosThread = (HANDLE)_beginthreadex(NULL, 0, AssistThread, this, 0, NULL );
 }
 
 
@@ -74,7 +74,7 @@ CMotionStateMach::~CMotionStateMach(void)
 }
 
 
-unsigned WINAPI CMotionStateMach::ReadPosThread(void *pParam)
+unsigned WINAPI CMotionStateMach::AssistThread(void *pParam)
 {
 	CMotionStateMach *pMSM = (CMotionStateMach *)pParam;
 
@@ -84,11 +84,12 @@ unsigned WINAPI CMotionStateMach::ReadPosThread(void *pParam)
 
 	while(WaitForSingleObject(pMSM->m_hEvRPT, 0) == WAIT_OBJECT_0)
 	{
-		Sleep(READ_POS_DELAY);
+		Sleep(ASSIST_DELAY);
 
 		if (!pMSM->m_bInit)
 			continue;
 		
+		//读取机器人位置
 		myStatus = RocksReadPosDelta(dRobotPos);
 
 		if(NyceError(myStatus))
@@ -100,6 +101,17 @@ unsigned WINAPI CMotionStateMach::ReadPosThread(void *pParam)
 
 		::SendMessage(pMSM->m_hMainWnd, WM_UPDATE_ROBOT_POS, NULL, (LPARAM)dRobotPos);
 
+		//读取modbus指令
+		float ptp_x(0.0), ptp_y(0.0), ptp_z(0.0), ptp_vel(0.0);
+		if(pMSM->m_mc.GetPtpComand(ptp_x, ptp_y, ptp_z, ptp_vel))
+			pMSM->SwitchToPtpState(ptp_x, ptp_y, ptp_z, ptp_vel);
+
+		if (pMSM->m_mc.GetHomeComand())
+			pMSM->SwitchToHomeState();
+
+		float jog_dist(0.0), jog_dire(0.0);
+		if (pMSM->m_mc.)
+			pMSM->SwitchToJogState(jog_dist, jog_dire);
 	}
 	return 0;
 }

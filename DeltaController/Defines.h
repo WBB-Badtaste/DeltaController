@@ -59,7 +59,7 @@ static ROCKS_COORD g_pickPos;
 #define DOOR_PAR_X 152.5
 #define DOOR_PAR_Y 0
 
-#define READ_POS_DELAY 500//循环读取机器人位置的时间间隔
+#define ASSIST_DELAY 500//协助线程的时间间隔
 
 //回零运动参数
 #define HOME_VEL 500

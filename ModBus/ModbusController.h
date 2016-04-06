@@ -41,8 +41,15 @@ public:
 
 	BOOL Send(const unsigned char *pSendBuffer, const unsigned &len, const BOOL &bSyncSingal);
 
+	//--20160406
+	BOOL GetPtpComand(float &x, float &y, float &z, float &vel);
+	BOOL GetHomeComand();
+	BOOL GetJogComand(float &dist, float &dire);
 
 private:
+	//--20160406
+	void GetMotionPars(float &x, float &y, float &z, float &dist, float &vel, float &acc, float &jerk);
+
 	BOOL Init();
 
  	CComController m_comm;

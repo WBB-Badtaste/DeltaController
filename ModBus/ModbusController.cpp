@@ -571,3 +571,131 @@ BOOL CModbusController::PrintStr(const unsigned char* const source, const unsign
 	return TRUE;
 }
 
+BOOL CModbusController::GetPtpComand(float &x, float &y, float &z, float &vel)
+{
+	//读取PTP标记
+	unsigned coilIndex = 7; //ptp标记位Index
+	unsigned coilNum = 1;	//需要读的coil数
+	unsigned dataLen = 1;	//缓冲区长度
+	unsigned char ptpSignal;//返回数据
+
+	CtrlModbusCoil(coilIndex, coilNum, dataLen, ptpSignal, true);
+
+	if (ptpSignal & 0x01)//要除去其他干扰位
+	{
+		float dist(0.0), acc(0.0), jerk(0.0);
+		GetMotionPars(x, y, z, dist, vel, acc, jerk);
+		
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+
+BOOL CModbusController::GetJogComand(float &dist, float &dire)
+{
+	//读取PTP标记
+	unsigned coilIndex = 1; //ptp标记位Index
+	unsigned coilNum = 6;	//需要读的coil数
+	unsigned dataLen = 1;	//缓冲区长度
+	unsigned char ptpSignal;//返回数据
+
+	if (ptpSignal & 0x01)//y轴正方向
+	{
+		dire = 1;
+
+		float x(0.0), y(0.0), z(0.0), vel(0.0), acc(0.0), jerk(0.0);
+		GetMotionPars(x, y, z, dist, vel, acc, jerk);
+
+		return TRUE;
+	}
+	else if(ptpSignal & 0x02)//y轴负方向
+	{
+		dire = 1;
+
+		float x(0.0), y(0.0), z(0.0), vel(0.0), acc(0.0), jerk(0.0);
+		GetMotionPars(x, y, z, dist, vel, acc, jerk);
+
+		dist = -dist;
+
+		return TRUE;
+	}
+	else if(ptpSignal & 0x04)//x轴正方向
+	{
+		dire = 2;
+
+		float x(0.0), y(0.0), z(0.0), vel(0.0), acc(0.0), jerk(0.0);
+		GetMotionPars(x, y, z, dist, vel, acc, jerk);
+
+		return TRUE;
+	}
+	else if(ptpSignal & 0x08)//x轴负方向
+	{
+		dire = 2;
+
+		float x(0.0), y(0.0), z(0.0), vel(0.0), acc(0.0), jerk(0.0);
+		GetMotionPars(x, y, z, dist, vel, acc, jerk);
+
+		dist = -dist;
+
+		return TRUE;
+	}
+	else if(ptpSignal & 0x10)//z轴正方向
+	{
+		dire = 3;
+
+		float x(0.0), y(0.0), z(0.0), vel(0.0), acc(0.0), jerk(0.0);
+		GetMotionPars(x, y, z, dist, vel, acc, jerk);
+
+		return TRUE;
+	}
+	else if(ptpSignal & 0x20)//z轴负方向
+	{
+		dire = 3;
+
+		float x(0.0), y(0.0), z(0.0), vel(0.0), acc(0.0), jerk(0.0);
+		GetMotionPars(x, y, z, dist, vel, acc, jerk);
+
+		dist = -dist;
+
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+
+BOOL CModbusController::GetHomeComand()
+{
+	//读取PTP标记
+	unsigned coilIndex = 9; //ptp标记位Index
+	unsigned coilNum = 1;	//需要读的coil数
+	unsigned dataLen = 1;	//缓冲区长度
+	unsigned char ptpSignal;//返回数据
+
+	CtrlModbusCoil(coilIndex, coilNum, dataLen, ptpSignal, true);
+
+	if (ptpSignal & 0x01)//要除去其他干扰位
+	{
+		return TRUE;
+	}
+	else
+		return FALSE;
+}
+
+void CModbusController::GetMotionPars(float &x, float &y, float &z, float &dist, float &vel, float &acc, float &jerk)
+{
+	unsigned regIndex = 19;			//运动数据起始Index
+	unsigned regNum = 14;			//需要读的reg数
+	unsigned dataLen = 28;			//缓冲区长度
+	unsigned char ptpData[dataLen];	//返回数据
+	CtrlModbusReg(regIndex, regNum, dataLen, ptpData);
+
+	dist = ((float)ptpData[3]) << 24 + ((float)ptpData[2]) << 16 + ((float)ptpData[1]) << 8 + ((float)ptpData[0]);
+	vel = ((float)ptpData[7]) << 24 + ((float)ptpData[6]) << 16 + ((float)ptpData[5]) << 8 + ((float)ptpData[4]);
+	acc = ((float)ptpData[11]) << 24 + ((float)ptpData[10]) << 16 + ((float)ptpData[9]) << 8 + ((float)ptpData[8]);
+	jerk = ((float)ptpData[15]) << 24 + ((float)ptpData[14]) << 16 + ((float)ptpData[13]) << 8 + ((float)ptpData[12]);
+	x = ((float)ptpData[19]) << 24 + ((float)ptpData[18]) << 16 + ((float)ptpData[17]) << 8 + ((float)ptpData[16]);
+	y = ((float)ptpData[23]) << 24 + ((float)ptpData[22]) << 16 + ((float)ptpData[21]) << 8 + ((float)ptpData[20]);
+	z = ((float)ptpData[27]) << 24 + ((float)ptpData[26]) << 16 + ((float)ptpData[25]) << 8 + ((float)ptpData[24]);
+	
+}
