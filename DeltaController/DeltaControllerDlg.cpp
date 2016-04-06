@@ -92,6 +92,8 @@ CDeltaControllerDlg::~CDeltaControllerDlg()
 		gCameras.CloseCamera(i);
 	}
 	
+	//testing
+	delete m_pMsm;
 }
 
 
@@ -241,6 +243,7 @@ BOOL CDeltaControllerDlg::OnInitDialog()
 
 	m_visionCW.SetDisplayOffset(zoom);
 
+	//testing
 	m_pMsm = new CMotionStateMach(this->m_hWnd);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -360,8 +363,6 @@ void CDeltaControllerDlg::OnDestroy()
 	CDialogEx::OnDestroy();
 
 	// TODO: Add your message handler code here
-
-	delete m_pMsm;
 
 }
 
@@ -715,9 +716,14 @@ void CDeltaControllerDlg::OnBnClickedBtnMatchModel()
 	totaltime =(double)(finish-start)/CLOCKS_PER_SEC;
 	m_edit_match_time = totaltime;
 
+
 	if(m_match_result==NULL) {
 		m_edit_locate_result = "匹配错误";
 		UpdateData(FALSE);
+
+		//让状态机在等待匹配结果，现在恢复线程
+		m_pMsm->FinlishMatch(m_match_result->position.x, m_match_result->position.y, m_match_result->angle, false);
+
 		return;
 	}
 
@@ -728,7 +734,7 @@ void CDeltaControllerDlg::OnBnClickedBtnMatchModel()
 	OnPaint();
 
 	//让状态机在等待匹配结果，现在恢复线程
-	m_pMsm->FinlishMatch(m_match_result->position.x, m_match_result->position.y, m_match_result->angle);
+	m_pMsm->FinlishMatch(m_match_result->position.x, m_match_result->position.y, m_match_result->angle, true);
 }
 
 //左键按下事件

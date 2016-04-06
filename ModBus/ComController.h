@@ -1,7 +1,7 @@
 #pragma once
 
  
-#define DEFAULT_COMM_NAME _T("COM1")
+#define DEFAULT_COMM_NAME _T("COM2")
 #define DEFAULT_COMM_RATE CBR_19200
 
 // 读取总超时 = ReadTotalTimeoutMultiplier * 字节数 + ReadTotalTimeoutConstant  
@@ -26,8 +26,8 @@ public:
 	CComController(void);
 	CComController(LPCSTR name, DWORD baudRate);
 	~CComController(void);
-	BOOL Send(char* lpSendBuffer, const unsigned &nNumberOfBytesToSend, unsigned &nBytesSend);
-	BOOL Read(char* lpReadBuffer, const unsigned &nNumberOfBytesToRead, unsigned &nBytesRead);
+	BOOL Send(unsigned char* lpSendBuffer, const unsigned &nNumberOfBytesToSend, unsigned &nBytesSend);
+	BOOL Read(unsigned char* lpReadBuffer, const unsigned &nNumberOfBytesToRead, unsigned &nBytesRead);
 };
 
 

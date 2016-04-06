@@ -34,6 +34,15 @@ static const char* NyceGetStatusStringEx(NYCE_STATUS statusCode)
 	case ROCKS_ERR_MAX_RADIAL_ACCELERATION_EXCEEDED:
 		return "ROCKS_ERR_MAX_RADIAL_ACCELERATION_EXCEEDED";
 		break;
+	case ROCKS_ERR_READ_BELT_POS_FAIL:
+		return "ROCKS_ERR_READ_BELT_POS_FAIL";
+		break;
+	case ROCKS_ERR_CALC_CATCH_POS_FAIL:
+		return "ROCKS_ERR_CALC_CATCH_POS_FAIL";
+		break;
+	case CAMERA_ERR_MATCH_FAIL:
+		return "CAMERA_ERR_MATCH_FAIL";
+		break;
 	default:
 		return NyceGetStatusString(statusCode);
 		break;

@@ -2,38 +2,25 @@
 #include "ModbusController.h"
 
 
-short CModbusController::m_regDatas[SYSTEM_REG_NUM];	//寄存器数据
-
-
-CRITICAL_SECTION CModbusController::m_cs_reg;		//寄存器控制临界区
+// unsigned short CModbusController::m_regDatas[SYSTEM_REG_NUM];	//寄存器数据
+// 
+// 
+// CRITICAL_SECTION CModbusController::m_cs_reg;		//寄存器控制临界区
 
 
 //DWORD WINAPI CModbusController::ReadThread(LPVOID pParam)
  unsigned WINAPI CModbusController::ReadThread(void *pParam)
 {
-// 	ARG_LIST *pReadArgs = (ARG_LIST *)pArgList;
-// 	HANDLE *pReadEvent_threading = pReadArgs->pEvent_running;
-// 	HANDLE *pReadEvent_read = pReadArgs->pEvent_work;
-// 	CComController *pComm = pReadArgs->pComm;
-// 	unsigned *pModubsId = pReadArgs->pModbusID;
-// 	int *pRegDatas = pReadArgs->pRegDatas;
-// 	CModbusController *pModbusObj = pReadArgs->pObj;
-// 
-// 	delete pReadArgs;//用完销毁传入结构体
-
 	CModbusController *pModbusObj = (CModbusController*)pParam;
 
-	char commReadBuffer[COMM_READ_BUFFER_SIZE];	//接收缓冲区
-	char commSendBuffer[COMM_SEND_BUFFER_SIZE];	//接收缓冲区
+	unsigned char commReadBuffer[COMM_READ_BUFFER_SIZE];	//接收缓冲区
+	unsigned char commSendBuffer[COMM_SEND_BUFFER_SIZE];	//接收缓冲区
 	unsigned readNumber(0);						//实际接收长度
 
 	unsigned regBeginIndex(0);		//待操作的寄存器首ID
-	unsigned regNum(0);				//待操作的寄存器个数
+	unsigned regNum(0), coilNum;	//待操作的寄存器，线圈个数
 	unsigned commDataLen(0);		//串口数据块长度
-//	unsigned bufferLen(0);			//待操作的寄存器数量
-// 	char *pData(nullptr);			//报文数据辅助指针
-// 	int *plVal(nullptr);			//位运算辅助指针
-//	int index(0);					//辅助序号
+
 
 	while (WaitForSingleObject(pModbusObj->m_hReadEvent_threading, 0) == WAIT_OBJECT_0)//读取循环事件
 	{
@@ -43,16 +30,13 @@ CRITICAL_SECTION CModbusController::m_cs_reg;		//寄存器控制临界区
 			continue;
 
 #ifdef _DEBUG
-		PrintStr(commReadBuffer, readNumber, true);
+		pModbusObj->PrintStr(commReadBuffer, readNumber, true);
 #endif
-
-		//SetEvent(pModbusObj->m_hReadEvent_read);//给同步读取使用	
 
 		if (!crc_check(commReadBuffer, readNumber))//CRC校验
 		{
 			continue;
 		}
-
 
 		if (commReadBuffer[0] != pModbusObj->m_modbusID)//判断是否发给本机
 			continue;
@@ -62,9 +46,6 @@ CRITICAL_SECTION CModbusController::m_cs_reg;		//寄存器控制临界区
 		switch (func_code)
 		{
 		case 0x10://写寄存器
-
-// 			regIndex = ((commReadBuffer[2] & 0xf0) * 16 + commReadBuffer[2] & 0x0f) * 10 + ((commReadBuffer[3] & 0xf0) * 16 + commReadBuffer[3] & 0x0f);
-// 			commDataLen = (commReadBuffer[6] & 0xf0) * 16 + commReadBuffer[6] & 0x0f;
 
 			regBeginIndex = ((short)commReadBuffer[2] << 8) + (short)commReadBuffer[3];
 			regNum = ((short)commReadBuffer[4] << 8) + (short)commReadBuffer[5];
@@ -79,20 +60,20 @@ CRITICAL_SECTION CModbusController::m_cs_reg;		//寄存器控制临界区
 			commSendBuffer[1] = commReadBuffer[1];
 			commSendBuffer[2] = commReadBuffer[2];
 			commSendBuffer[3] = commReadBuffer[3];
+			commSendBuffer[4] = commReadBuffer[4];
+			commSendBuffer[5] = commReadBuffer[5];
 
-			crc_16(commSendBuffer, &commSendBuffer[4], 4);
+			crc_16((unsigned char*)commSendBuffer, (unsigned char*)&commSendBuffer[6], 6);
 			
-			pModbusObj->Send(commSendBuffer, 6, FALSE);//响应报文
+			pModbusObj->Send(commSendBuffer, 8, FALSE);//响应报文
 
 #ifdef _DEBUG
-			PrintStr(commSendBuffer, 6, false);
+			pModbusObj->PrintStr(commSendBuffer, 8, false);
 #endif
 			break;
 
 		case 0x03://读寄存器
 
-// 			regIndex = (commReadBuffer[2] & 0xf0 * 16 + commReadBuffer[2] & 0x0f) * 10 + (commReadBuffer[3] & 0xf0 * 16 + commReadBuffer[3] & 0x0f);
-// 			commDataLen = ((commReadBuffer[4] & 0xf0 * 16 + commReadBuffer[4] & 0x0f) * 10 + (commReadBuffer[5] & 0xf0 * 16 + commReadBuffer[5] & 0x0f)) * 2;
 			
 			regBeginIndex = ((short)commReadBuffer[2] << 8) + (short)commReadBuffer[3];
 			regNum = ((short)commReadBuffer[4] << 8) + (short)commReadBuffer[5];
@@ -107,23 +88,20 @@ CRITICAL_SECTION CModbusController::m_cs_reg;		//寄存器控制临界区
 
 			pModbusObj->CtrlModbusReg(regBeginIndex, commDataLen, &commSendBuffer[3], true);
 
-			crc_16(commSendBuffer, &commSendBuffer[commDataLen + 3], commDataLen + 3);
+			crc_16((unsigned char*)commSendBuffer, (unsigned char*)&commSendBuffer[commDataLen + 3], commDataLen + 3);
 
 			pModbusObj->Send(commSendBuffer, commDataLen + 5, FALSE);//响应报文
 
 #ifdef _DEBUG
-			PrintStr(commSendBuffer, commDataLen + 5, false);
+			pModbusObj->PrintStr(commSendBuffer, commDataLen + 5, false);
 #endif
 			break;
 
 		case 0x01://读线圈
 
-// 			bufferIndex = (commReadBuffer[2] & 0xf0 * 16 + commReadBuffer[2] & 0x0f) * 10 + (commReadBuffer[3] & 0xf0 * 16 + commReadBuffer[3] & 0x0f);
-// 			bufferEndIndex = bufferIndex + (commReadBuffer[4] & 0xf0 * 16 + commReadBuffer[4] & 0x0f) * 10 + (commReadBuffer[5] & 0xf0 * 16 + commReadBuffer[5] & 0x0f);
-
 			regBeginIndex = ((short)commReadBuffer[2] << 8) + (short)commReadBuffer[3];
-			regNum = ((short)commReadBuffer[4] << 8) + (short)commReadBuffer[5];
-			commDataLen = regNum;
+			coilNum = ((short)commReadBuffer[4] << 8) + (short)commReadBuffer[5];
+			commDataLen = (coilNum - 1) / 8 + 1;
 
 			//应答
 			ZeroMemory(commSendBuffer, COMM_SEND_BUFFER_SIZE);//清空缓冲区
@@ -132,24 +110,24 @@ CRITICAL_SECTION CModbusController::m_cs_reg;		//寄存器控制临界区
 			commSendBuffer[1] = commReadBuffer[1];
 			commSendBuffer[2] = (char)commDataLen;
 
-			pModbusObj->CtrlModbusCoil(regBeginIndex, commDataLen, &commSendBuffer[3], true);
+			pModbusObj->CtrlModbusCoil(regBeginIndex, coilNum, commDataLen, &commSendBuffer[3], true);
 
-			crc_16(commSendBuffer, &commSendBuffer[commDataLen + 3], commDataLen + 3);
+			crc_16((unsigned char*)commSendBuffer, (unsigned char*)&commSendBuffer[commDataLen + 3], commDataLen + 3);
 
 			pModbusObj->Send(commSendBuffer, commDataLen + 5, FALSE);//响应报文
 
 #ifdef _DEBUG
-			PrintStr(commSendBuffer, commDataLen + 5, false);
+			pModbusObj->PrintStr(commSendBuffer, commDataLen + 5, false);
 #endif
 			break;
 
 		case 0x0f://写线圈
 
 			regBeginIndex = ((short)commReadBuffer[2] << 8) + (short)commReadBuffer[3];
-			regNum = ((short)commReadBuffer[4] << 8) + (short)commReadBuffer[5];
+			coilNum = ((short)commReadBuffer[4] << 8) + (short)commReadBuffer[5];
 			commDataLen = (short)commReadBuffer[6];
 
-			pModbusObj->CtrlModbusCoil(regBeginIndex, commDataLen, &commReadBuffer[7], false);
+			pModbusObj->CtrlModbusCoil(regBeginIndex, coilNum, commDataLen, &commReadBuffer[7], false);
 
 			//应答
 			ZeroMemory(commSendBuffer, COMM_SEND_BUFFER_SIZE);//清空缓冲区
@@ -158,13 +136,15 @@ CRITICAL_SECTION CModbusController::m_cs_reg;		//寄存器控制临界区
 			commSendBuffer[1] = commReadBuffer[1];
 			commSendBuffer[2] = commReadBuffer[2];
 			commSendBuffer[3] = commReadBuffer[3];
+			commSendBuffer[4] = commReadBuffer[4];
+			commSendBuffer[5] = commReadBuffer[5];
 
-			crc_16(commSendBuffer, &commSendBuffer[4], 5);
+			crc_16((unsigned char*)commSendBuffer, (unsigned char*)&commSendBuffer[6], 6);
 
-			pModbusObj->Send(commSendBuffer, 6, FALSE);//响应报文
+			pModbusObj->Send(commSendBuffer, 8, FALSE);//响应报文
 
 #ifdef _DEBUG
-			PrintStr(commSendBuffer, 6, false);
+			pModbusObj->PrintStr(commSendBuffer, 8, false);
 #endif
 			break;
 
@@ -179,18 +159,8 @@ CRITICAL_SECTION CModbusController::m_cs_reg;		//寄存器控制临界区
 } 
 
 
-//DWORD WINAPI CModbusController::SendThread(LPVOID pParam)
 unsigned WINAPI CModbusController::SendThread(void* pParam)
 {
-// 	ARG_LIST *pSendArgs = (ARG_LIST *)pArgList;
-// 	HANDLE *pSendEvent_threading = pSendArgs->pEvent_running;
-// 	HANDLE *pSendEvent_send = pSendArgs->pEvent_work;
-// 	CComController *pComm = pSendArgs->pComm;
-// 	unsigned *pModubsId = pSendArgs->pModbusID;
-// 	int *pRegDatas = pSendArgs->pRegDatas;
-// 	CModbusController *pModbusObj = pSendArgs->pObj;
-
-//	delete pSendArgs;//用完销毁传入结构体
 
 	CModbusController *pModbusObj = (CModbusController*)pParam;
 
@@ -202,16 +172,19 @@ unsigned WINAPI CModbusController::SendThread(void* pParam)
 	{
 		WaitForSingleObject(pModbusObj->m_hSendEvent_sent, INFINITE);
 
-		for (iter = pModbusObj->m_vec_commSendBuffer.begin(); iter != pModbusObj->m_vec_commSendBuffer.end(); iter = pModbusObj->m_vec_commSendBuffer.begin())
+		EnterCriticalSection(&pModbusObj->m_cs_sendBuffer);
+		for (iter = pModbusObj->m_vec_commSendBuffer.begin(); iter != pModbusObj->m_vec_commSendBuffer.end(); )
 		{
 			Sleep(MODBUS_SEND_DELAY);
 
 			if (!pModbusObj->m_comm.Send(iter->buffer, iter->bufLen, lenSent))
 				continue;
-
-			pModbusObj->m_vec_commSendBuffer.erase(iter);
+#ifdef _DEBUG
+			unsigned len = pModbusObj->m_vec_commSendBuffer.size();
+#endif
+			iter = pModbusObj->m_vec_commSendBuffer.erase(iter);
 		}
-
+		LeaveCriticalSection(&pModbusObj->m_cs_sendBuffer);
 		ResetEvent(pModbusObj->m_hSendEvent_sent);
 	}
 
@@ -298,7 +271,8 @@ CModbusController::CModbusController(void):
 	m_uSendId(0)
 {
 	InitializeCriticalSection(&m_cs_reg);
-	ZeroMemory(m_regDatas, SYSTEM_REG_NUM * sizeof(short));
+	InitializeCriticalSection(&m_cs_sendBuffer);
+	ZeroMemory(m_regDatas, SYSTEM_BUFFER_NUM * sizeof(short));
 	Init();
 }
 
@@ -316,7 +290,8 @@ CModbusController::CModbusController(LPCSTR name, DWORD baudRate):
 	m_uSendId(0)
 {
 	InitializeCriticalSection(&m_cs_reg);
-	ZeroMemory(m_regDatas, SYSTEM_REG_NUM * sizeof(short));
+	InitializeCriticalSection(&m_cs_sendBuffer);
+	ZeroMemory(m_regDatas, SYSTEM_BUFFER_NUM * sizeof(short));
  	Init();
 }
 
@@ -334,7 +309,8 @@ CModbusController::CModbusController(const unsigned modbusID):
 	m_uSendId(0)
 {
 	InitializeCriticalSection(&m_cs_reg);
-	ZeroMemory(m_regDatas, SYSTEM_REG_NUM * sizeof(short));
+	InitializeCriticalSection(&m_cs_sendBuffer);
+	ZeroMemory(m_regDatas, SYSTEM_BUFFER_NUM * sizeof(short));
 	Init();
 }
  
@@ -352,7 +328,8 @@ CModbusController::CModbusController(LPCSTR name, DWORD baudRate, const unsigned
 	m_uSendId(0)
 {
 	InitializeCriticalSection(&m_cs_reg);
-	ZeroMemory(m_regDatas, SYSTEM_REG_NUM * sizeof(short));
+	InitializeCriticalSection(&m_cs_sendBuffer);
+	ZeroMemory(m_regDatas, SYSTEM_BUFFER_NUM * sizeof(short));
  	Init();
 }
 
@@ -364,11 +341,12 @@ CModbusController::~CModbusController(void)
 	ResetEvent(m_hSendEvent_threading);
 	SetEvent(m_hSendEvent_sent);
 	WaitForSingleObject(m_hSendThread, INFINITE);
+	DeleteCriticalSection(&m_cs_sendBuffer); 
  	DeleteCriticalSection(&m_cs_reg); 
 }
 
 
-BOOL CModbusController::Send(const char *pSendBuffer, const unsigned &len, const BOOL &bSyncSingal = TRUE)
+BOOL CModbusController::Send(const unsigned char *pSendBuffer, const unsigned &len, const BOOL &bSyncSingal = TRUE)
 {
 	if (bSyncSingal == TRUE)
 		WaitForSingleObject(m_hSendEvent_sent, INFINITE);
@@ -380,7 +358,9 @@ BOOL CModbusController::Send(const char *pSendBuffer, const unsigned &len, const
 	}
 	sendBuf.bufLen = len;
 
+	EnterCriticalSection(&m_cs_sendBuffer);
 	m_vec_commSendBuffer.push_back(sendBuf);
+	LeaveCriticalSection(&m_cs_sendBuffer);
 
 	SetEvent(m_hSendEvent_sent);
 
@@ -388,11 +368,11 @@ BOOL CModbusController::Send(const char *pSendBuffer, const unsigned &len, const
 }
 
 
-BOOL CModbusController::CtrlRegSync(const unsigned &index, const unsigned &num, short *pRecvRegData, const bool &ctrlType)
+BOOL CModbusController::CtrlRegSync(const unsigned &index, const unsigned &num, unsigned short *pRecvRegData, const bool ctrlType)
 {
 	unsigned regIndex(index), regEndIndex(index + num), bufIndex(0);
 
-	if (regEndIndex > SYSTEM_REG_NUM)//超出寄存器数量
+	if (regEndIndex > SYSTEM_BUFFER_NUM)//超出寄存器数量
 		return FALSE;
 
 	EnterCriticalSection(&m_cs_reg);// 进入临界区，其它线程则无法进入  
@@ -410,14 +390,15 @@ BOOL CModbusController::CtrlRegSync(const unsigned &index, const unsigned &num, 
 }
 
 
-BOOL CModbusController::ReadReg(const unsigned &index, const unsigned &num, short *pRegData)
+BOOL CModbusController::ReadReg(const unsigned &index, const unsigned &num, unsigned short *pRegData)
 {
 	return CtrlRegSync(index, num, pRegData, true);
 }
 
 
-BOOL CModbusController::WriteReg(const unsigned &index, const unsigned &num, short *pRegData)
+BOOL CModbusController::WriteReg(const unsigned &index, const unsigned &num,  unsigned short *pRegData)
 {
+
 	if (CtrlRegSync(index, num, pRegData, false))
 		return FALSE;
 
@@ -425,39 +406,82 @@ BOOL CModbusController::WriteReg(const unsigned &index, const unsigned &num, sho
 }
 
 
-BOOL CModbusController::CtrlModbusCoil(const unsigned &index, const unsigned &CommDataLen, char *pCommData, const bool &ctrlType)
+BOOL CModbusController::CtrlModbusCoil(const unsigned &index, const unsigned &coilNum, const unsigned &CommDataLen, unsigned char *pCommData, const bool &ctrlType)
 {
-	unsigned regDataLen(CommDataLen);
-	short regData[SYSTEM_REG_NUM];
+	unsigned regDataLen((coilNum - 1) / 16 + 1);
+	unsigned short regData[COIL_NUM_OF_BUFFER];
 
-	ZeroMemory(regData, SYSTEM_REG_NUM * sizeof(short));
+	unsigned regIndex(COIL_INDEX_OF_BUFFER + index / 16);
+	unsigned coilIndex(index % 16);
+
+	ZeroMemory(regData, COIL_NUM_OF_BUFFER * sizeof(short));
+
+	unsigned offset((16 - coilIndex));//偏移量
+	
 
 	if (ctrlType)//读线圈
 	{
-		if(!ReadReg(index, regDataLen, regData))
+		if(!ReadReg(regIndex, regDataLen, regData))
 			return FALSE;
 
-		for (unsigned i = 0; i < regDataLen; i++)
-			pCommData[i] = regData[i] & 0x00FF;
+		unsigned short mask(coilIndex == 0 ? 0x0000 : 0xFFFF >> offset);
+
+		for (unsigned i = 0; i < regDataLen; ++i)
+		{
+			const unsigned short buffer((regData[i] >> coilIndex) + ((regData[i + 1] & mask) << offset));
+
+			pCommData[i * 2] = buffer & 0x00ff;
+			pCommData[i * 2 + 1] = (buffer & 0xff00) >> 8;
+		}
 
 		return TRUE;
 	}
 	else//写线圈
 	{
-		for (unsigned i = 0; i < regDataLen; i++)
-			regData[i] = pCommData[i];
+		unsigned bufferLen((coilNum + coilIndex - 1) / 16 + 1); //移位后需要的缓冲区长度
+		unsigned short mask(coilIndex == 0 ? 0x0000 : 0xFFFF << offset);
 
-		return WriteReg(index, regDataLen, regData);
+		for (unsigned i = 0; i < bufferLen; ++i)
+		{
+			if (i)
+			{
+				regData[i] = (pCommData[i] << coilIndex + ((pCommData[i - 1] & mask) >> offset));
+			}
+			else
+			{
+				regData[i] = (pCommData[i] << coilIndex);
+			}
+		}
+
+		unsigned short mask_head(~(0xFFFF << coilIndex));
+		unsigned short mask_tail(0xFFFF << ((coilNum + coilIndex - 1) % 16 + 1));
+
+		EnterCriticalSection(&m_cs_reg);// 进入临界区，其它线程则无法进入  
+
+		for (unsigned i = 0; i < bufferLen; ++i)
+		{
+			mask = 0x0000;
+
+			if (i == 0) mask |= mask_head;
+
+			if(i == bufferLen - 1) mask |= mask_tail;
+			
+			m_regDatas[regIndex + i] = (m_regDatas[regIndex + i] & mask) + regData[i];
+		}
+
+		LeaveCriticalSection(&m_cs_reg);  // 离开临界区，其它线程可以进入
+
+		return TRUE;
 	}
 }
 
 
-BOOL CModbusController::CtrlModbusReg(const unsigned &regIndex, const unsigned &CommDataLen, char *pCommData, const bool &ctrlType)
+BOOL CModbusController::CtrlModbusReg(const unsigned &regIndex, const unsigned &CommDataLen, unsigned char *pCommData, const bool &ctrlType)
 {
 	unsigned regDataLen(CommDataLen / 2);
-	short regData[SYSTEM_REG_NUM];
+	unsigned short regData[REG_NUM_OF_BUFFER];
 
-	ZeroMemory(regData, SYSTEM_REG_NUM * sizeof(short));
+	ZeroMemory(regData, REG_NUM_OF_BUFFER * sizeof(short));
 
 	if (ctrlType)//读寄存器
 	{
@@ -484,12 +508,14 @@ BOOL CModbusController::CtrlModbusReg(const unsigned &regIndex, const unsigned &
 }
 
 
-BOOL CModbusController::TransStrToHexFromat(const char* const source, const unsigned &sourceLen, TCHAR* const target, unsigned &targetLen)
+BOOL CModbusController::TransStrToHexFromat(const unsigned char* const source, const unsigned &sourceLen, TCHAR* const target, unsigned &targetLen)
 {
 	const unsigned buffLen(sourceLen * 3);
 	char char_H4, char_L4;
 
 	char *pb = new char[buffLen];
+
+	ZeroMemory(pb, buffLen * sizeof(char));
 
 	for (unsigned i = 0; i < sourceLen; ++i)
 	{
@@ -514,7 +540,7 @@ BOOL CModbusController::TransStrToHexFromat(const char* const source, const unsi
 	if (targetLen == 0)
 		return FALSE;
 #else
-	strcpy(target, pb);
+	strcpy_s(target, buffLen, pb);
 	targetLen = buffLen;
 #endif
 
@@ -526,9 +552,9 @@ BOOL CModbusController::TransStrToHexFromat(const char* const source, const unsi
 }
 
 
-BOOL CModbusController::PrintStr(const char* const source, const unsigned &sourceLen, const bool &ctrlType)
+BOOL CModbusController::PrintStr(const unsigned char* const source, const unsigned &sourceLen, const bool &ctrlType)
 {
-	const unsigned defaultLen(max(COMM_READ_BUFFER_SIZE, COMM_SEND_BUFFER_SIZE) * 2);
+	const unsigned defaultLen(max(COMM_READ_BUFFER_SIZE, COMM_SEND_BUFFER_SIZE) * 3);
 	TCHAR commStrHex[defaultLen];
 	ZeroMemory(commStrHex, sizeof(TCHAR) * defaultLen);
 	unsigned commStrHexLen(0);
@@ -544,3 +570,4 @@ BOOL CModbusController::PrintStr(const char* const source, const unsigned &sourc
 
 	return TRUE;
 }
+

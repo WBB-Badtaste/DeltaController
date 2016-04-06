@@ -1036,7 +1036,7 @@ static NYCE_STATUS RocksRotateAngle(const double angle)
 	ptpPos_rotation.positionReference = SAC_RELATIVE;
 	ptpPos_rotation.position = pos;
 	ptpPos_rotation.velocity = ROTATE_VEL * ROTATE_ANGLE_RATE;
-	ptpPos_rotation.acceleration = ptpPos_rotation.velocity * 10;
+	ptpPos_rotation.acceleration = ptpPos_rotation.velocity * 100;
 	ptpPos_rotation.jerk = ptpPos_rotation.velocity * 100;
 
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacPointToPoint(rotationId[0], &ptpPos_rotation);

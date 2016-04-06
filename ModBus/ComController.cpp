@@ -67,10 +67,14 @@ CComController::CComController(void):
 	//修改波特率
 
 	dcb.BaudRate = DEFAULT_COMM_RATE;
+	dcb.fParity = 1;
+	dcb.Parity = 2;
 
 	//重新设置参数
 
 	SetCommState(m_hComm, &dcb);
+
+	GetCommState(m_hComm, &dcb);
 
 	SetupComm(m_hComm, 1024, 1024); //输入缓冲区和输出缓冲区的大小都是1024
 
@@ -128,6 +132,7 @@ CComController::CComController(LPCSTR name, DWORD baudRate)
 
 	//修改波特率
 	dcb.BaudRate = baudRate;
+	dcb.Parity = 2;
 
 	//重新设置参数
 	SetCommState(m_hComm, &dcb);
@@ -157,7 +162,7 @@ CComController::~CComController(void)
 	  CloseHandle(m_hComm); 
 }
 
-BOOL CComController::Send(char* lpSendBuffer, const unsigned &nNumberOfBytesToSend, unsigned &nBytesSend)
+BOOL CComController::Send(unsigned char* lpSendBuffer, const unsigned &nNumberOfBytesToSend, unsigned &nBytesSend)
 {
 	BOOL bRes(m_hComm != INVALID_HANDLE_VALUE);
 
@@ -179,7 +184,7 @@ BOOL CComController::Send(char* lpSendBuffer, const unsigned &nNumberOfBytesToSe
 	return bRes;
 }
 
-BOOL CComController::Read(char* lpReadBuffer, const unsigned &nNumberOfBytesToRead, unsigned &nBytesRead)
+BOOL CComController::Read(unsigned char* lpReadBuffer, const unsigned &nNumberOfBytesToRead, unsigned &nBytesRead)
 {
 	BOOL bRes(m_hComm != INVALID_HANDLE_VALUE);
 

@@ -35,7 +35,7 @@ public:
 	bool SwitchToHomeState();
 	bool SwitchToCircState(const double &vel);
 	bool SwitchToJogState(const double &dist, const int &dire);
-	bool FinlishMatch(const double &x, const double &y, const double &angle);
+	bool FinlishMatch(const double &x, const double &y, const double &angle, const bool &bSuccess);
 
 private:
 	//Æ¥Åä½á¹û

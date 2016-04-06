@@ -30,13 +30,13 @@ static NHI_NODE noId[ NUM_NODE ];
 //皮带轴
 #define BELT_VEL 200 //传送带速度，单位mm/s
 #define BELT_BASE_RATE 15518.2130329563124//15548.8947763849895 //实际移动长度与编码器值的比值
-static double THRESHOLD_TIME = 0.085; //计算时间阈值，单位S
+static double THRESHOLD_TIME = 0.25; //计算时间阈值，单位S
 // double g_encoderMinRange;
 // double g_encoderMaxRange;
 
 //旋转轴
-#define ROTATE_ANGLE_RATE (131072 / 360)
-#define ROTATE_VEL M_PI
+#define ROTATE_ANGLE_RATE (1310720 / 360.0)
+#define ROTATE_VEL 360
 
 //机构位移调整参数,实际长度与机构行程的比值
 #define KIN_BASE_RATE 0.9737

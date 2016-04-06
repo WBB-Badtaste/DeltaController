@@ -47,31 +47,30 @@ CMotionStateMach::CMotionStateMach(HWND hMainWnd)
 
 CMotionStateMach::~CMotionStateMach(void)
 {
-	NYCE_STATUS nyceStatus(NYCE_OK);
-
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : Home();
-	
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksTerm();
-	
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : TermAxis(NUM_AXES, axId);
-	
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : TermAxis(NUM_AXES_ROTATION, rotationId);
-	
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : TermAxis(NUM_AXES_BELT, beltId);
-	
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiDisconnect(noId[0]);
-	
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NyceTerm();
-	
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksTermMatrix();
-
+	m_bInit = false;
 	//关闭读位置线程
 	ResetEvent(m_hEvRPT);
-	WaitForSingleObject(m_hReadPosThread, INFINITE);
+	WaitForSingleObject(m_hReadPosThread, 500);
 	//关闭状态机线程
 	ResetEvent(m_hEvST);
 	SetEvent(m_hEvMove);
-	WaitForSingleObject(m_hStateThread, INFINITE);
+	WaitForSingleObject(m_hStateThread, 500);
+
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksTerm();
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : TermAxis(NUM_AXES, axId);
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : TermAxis(NUM_AXES_ROTATION, rotationId);
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : TermAxis(NUM_AXES_BELT, beltId);
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiDisconnect(noId[0]);
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NyceTerm();
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksTermMatrix();
 }
 
 
@@ -83,7 +82,7 @@ unsigned WINAPI CMotionStateMach::ReadPosThread(void *pParam)
 
 	double dRobotPos[6];
 
-	while(WaitForSingleObject(pMSM->m_hEvRPT, INFINITE) == WAIT_OBJECT_0)
+	while(WaitForSingleObject(pMSM->m_hEvRPT, 0) == WAIT_OBJECT_0)
 	{
 		Sleep(READ_POS_DELAY);
 
@@ -112,9 +111,11 @@ unsigned WINAPI CMotionStateMach::StateThread(void *pParam)
 
 	NYCE_STATUS myStatus(NYCE_OK);
 
-	while(WaitForSingleObject(pMSM->m_hEvST, INFINITE) == WAIT_OBJECT_0)
+	while(WaitForSingleObject(pMSM->m_hEvMove, INFINITE) == WAIT_OBJECT_0)
 	{
-		WaitForSingleObject(pMSM->m_hEvMove, INFINITE);
+		if (WaitForSingleObject(pMSM->m_hEvST, 0) != WAIT_OBJECT_0)//退出线程标志
+			break;
+
 		if (!pMSM->m_bInit && pMSM->m_status != INIT)
 		{
 			pMSM->SendString("System should be initialed first.");
@@ -286,6 +287,18 @@ const uint32_t CMotionStateMach::Catch()
 	targetPos_carmera.position.y = 0;
 	targetPos_carmera.position.z = 0;
 
+	//临时
+	ROCKS_COORD catchUpPos;
+	catchUpPos.type = KIN_COORD;
+	catchUpPos.position.x = 0;
+	catchUpPos.position.y = 60;
+	catchUpPos.position.z = 0;
+
+	TRAJ_PARS catchUpPars;
+	catchUpPars.velocity = 230;
+	catchUpPars.acceleration = catchUpPars.velocity * 100;
+	catchUpPars.splineTime = 0.01;
+
 	for (int i = 0; i <= 5; ++i)
 	{
 		//移动到目标表面
@@ -309,7 +322,7 @@ const uint32_t CMotionStateMach::Catch()
 
 		//停1s待目标放下
 		if (NyceSuccess(nyceStatus))
-			Sleep(2000);
+			Sleep(3000);
 
 		//关闭吹气阀
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io2);//place
@@ -330,8 +343,8 @@ const uint32_t CMotionStateMach::Catch()
 		//读取皮带编码器值
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacReadVariable(beltId[0], SAC_VAR_AXIS_POS, &targetPos_kin.cuEncoderValue);
 
-		//test
-		Sleep(1000);
+		//匹配后的反应时间，可以不要
+		Sleep(500);
 
 		if (NyceSuccess(nyceStatus))
 		{
@@ -340,11 +353,17 @@ const uint32_t CMotionStateMach::Catch()
 			WaitForSingleObject(m_hEvFinlishMatch, INFINITE);
 			m_bWaitForMatchRes = false;
 			
+			if (m_dTargetPos_x == 0 && m_dTargetPos_y ==0)
+			{
+				return CAMERA_ERR_MATCH_FAIL;
+			}
 			targetPos_carmera.position.x = m_dTargetPos_x;
 			targetPos_carmera.position.y = m_dTargetPos_y;
 			ConvertTwoCoordinate(targetPos_carmera, targetPos_kin);
 			
 		}
+
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksRotateAngle(-m_dTargetAngle);
 
 		//启动皮带正向运动
 		SAC_JOG_PARS jogPars_belt;
@@ -354,7 +373,7 @@ const uint32_t CMotionStateMach::Catch()
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacStartJog(beltId[0], &jogPars_belt);
 
 		if (NyceSuccess(nyceStatus))
-			Sleep(4800);
+			Sleep(4500 * 200 / BELT_VEL);
 
 		//开始计算抓取点
 		//--JoMar--20160202
@@ -369,17 +388,20 @@ const uint32_t CMotionStateMach::Catch()
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksDoorDelta(doorPars2);
 
 		//二次计算抓取位置
-		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksCalcCatchPos(catchPars, doorPars2.endPos, targetPos_kin, -12 * KIN_BASE_RATE, catchPos);
-
-		//PTP到实际抓取位置
-		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(catchPos, catchPars);
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksCalcCatchPos(catchPars, doorPars2.endPos, targetPos_kin, -20 * KIN_BASE_RATE, catchPos);
 
 		//打开吸气阀
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io1);//pick
 
-		//停0.2s
-		if (NyceSuccess(nyceStatus))
-			Sleep(200);
+		//PTP到实际抓取位置
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(catchPos, catchPars);
+
+// 		//临时
+ //		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(catchUpPos, catchUpPars, TRUE);
+
+// 		//停0.2s
+// 		if (NyceSuccess(nyceStatus))
+// 			Sleep(700);
 
 		doorPars3.startPos.position.x = catchPos.position.x;
 		doorPars3.startPos.position.y = catchPos.position.y;
@@ -389,6 +411,8 @@ const uint32_t CMotionStateMach::Catch()
 		//移动到放置点
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksDoorDelta(doorPars3);
 
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksRotateAngle(m_dTargetAngle);
+
 		//关闭吸气阀
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io1);	//place
 
@@ -397,7 +421,7 @@ const uint32_t CMotionStateMach::Catch()
 
 		//停2s
 		if (NyceSuccess(nyceStatus))
-			Sleep(2000);
+			Sleep(500);
 
 		//关闭吹气阀
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io2);	//place
@@ -407,6 +431,8 @@ const uint32_t CMotionStateMach::Catch()
 
 		//停止传送带
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacStopJog(beltId[0], &jogPars_belt);
+
+		Sleep(1000);
 	}
 
 	return nyceStatus;
@@ -570,11 +596,20 @@ const uint32_t CMotionStateMach::Circ()
 	return nyceStatus;
 }
 
-bool CMotionStateMach::FinlishMatch(const double &x, const double &y, const double &angle)
+bool CMotionStateMach::FinlishMatch(const double &x, const double &y, const double &angle, const bool &bSuccess)
 {
-	m_dTargetPos_x = x;
-	m_dTargetPos_y = y;
-	m_dTargetAngle = angle;
+	if (bSuccess)
+	{
+		m_dTargetPos_x = x;
+		m_dTargetPos_y = y;
+		m_dTargetAngle = angle;
+	}
+	else
+	{
+		m_dTargetPos_x = 0.0;
+		m_dTargetPos_y = 0.0;
+		m_dTargetAngle = 0.0;
+	}
 
 	if (!m_bWaitForMatchRes)
 		return false;
