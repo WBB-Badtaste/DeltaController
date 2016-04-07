@@ -110,7 +110,7 @@ unsigned WINAPI CMotionStateMach::AssistThread(void *pParam)
 			pMSM->SwitchToHomeState();
 
 		float jog_dist(0.0), jog_dire(0.0);
-		if (pMSM->m_mc.)
+		if (pMSM->m_mc.GetJogComand(jog_dist, jog_dire))
 			pMSM->SwitchToJogState(jog_dist, jog_dire);
 	}
 	return 0;

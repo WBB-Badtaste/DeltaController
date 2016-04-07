@@ -445,7 +445,7 @@ BOOL CModbusController::CtrlModbusCoil(const unsigned &index, const unsigned &co
 		{
 			if (i)
 			{
-				regData[i] = (pCommData[i] << coilIndex + ((pCommData[i - 1] & mask) >> offset));
+				regData[i] = ((pCommData[i] << coilIndex) + ((pCommData[i - 1] & mask) >> offset));
 			}
 			else
 			{
@@ -510,7 +510,7 @@ BOOL CModbusController::CtrlModbusReg(const unsigned &regIndex, const unsigned &
 
 BOOL CModbusController::TransStrToHexFromat(const unsigned char* const source, const unsigned &sourceLen, TCHAR* const target, unsigned &targetLen)
 {
-	const unsigned buffLen(sourceLen * 3);
+	const unsigned buffLen(sourceLen * 3 + 1);//多出一位是结束符
 	char char_H4, char_L4;
 
 	char *pb = new char[buffLen];
@@ -540,8 +540,8 @@ BOOL CModbusController::TransStrToHexFromat(const unsigned char* const source, c
 	if (targetLen == 0)
 		return FALSE;
 #else
-	strcpy_s(target, buffLen, pb);
 	targetLen = buffLen;
+	strcpy(target, pb);
 #endif
 
 	delete[] pb;
@@ -577,9 +577,9 @@ BOOL CModbusController::GetPtpComand(float &x, float &y, float &z, float &vel)
 	unsigned coilIndex = 7; //ptp标记位Index
 	unsigned coilNum = 1;	//需要读的coil数
 	unsigned dataLen = 1;	//缓冲区长度
-	unsigned char ptpSignal;//返回数据
+	unsigned char ptpSignal(0x00);//返回数据
 
-	CtrlModbusCoil(coilIndex, coilNum, dataLen, ptpSignal, true);
+	CtrlModbusCoil(coilIndex, coilNum, dataLen, &ptpSignal, true);
 
 	if (ptpSignal & 0x01)//要除去其他干扰位
 	{
@@ -598,7 +598,7 @@ BOOL CModbusController::GetJogComand(float &dist, float &dire)
 	unsigned coilIndex = 1; //ptp标记位Index
 	unsigned coilNum = 6;	//需要读的coil数
 	unsigned dataLen = 1;	//缓冲区长度
-	unsigned char ptpSignal;//返回数据
+	unsigned char ptpSignal(0x00);//返回数据
 
 	if (ptpSignal & 0x01)//y轴正方向
 	{
@@ -670,9 +670,9 @@ BOOL CModbusController::GetHomeComand()
 	unsigned coilIndex = 9; //ptp标记位Index
 	unsigned coilNum = 1;	//需要读的coil数
 	unsigned dataLen = 1;	//缓冲区长度
-	unsigned char ptpSignal;//返回数据
+	unsigned char ptpSignal(0x00);//返回数据
 
-	CtrlModbusCoil(coilIndex, coilNum, dataLen, ptpSignal, true);
+	CtrlModbusCoil(coilIndex, coilNum, dataLen, &ptpSignal, true);
 
 	if (ptpSignal & 0x01)//要除去其他干扰位
 	{
@@ -687,15 +687,30 @@ void CModbusController::GetMotionPars(float &x, float &y, float &z, float &dist,
 	unsigned regIndex = 19;			//运动数据起始Index
 	unsigned regNum = 14;			//需要读的reg数
 	unsigned dataLen = 28;			//缓冲区长度
-	unsigned char ptpData[dataLen];	//返回数据
-	CtrlModbusReg(regIndex, regNum, dataLen, ptpData);
+	unsigned char ptpData[28];		//返回数据
 
-	dist = ((float)ptpData[3]) << 24 + ((float)ptpData[2]) << 16 + ((float)ptpData[1]) << 8 + ((float)ptpData[0]);
-	vel = ((float)ptpData[7]) << 24 + ((float)ptpData[6]) << 16 + ((float)ptpData[5]) << 8 + ((float)ptpData[4]);
-	acc = ((float)ptpData[11]) << 24 + ((float)ptpData[10]) << 16 + ((float)ptpData[9]) << 8 + ((float)ptpData[8]);
-	jerk = ((float)ptpData[15]) << 24 + ((float)ptpData[14]) << 16 + ((float)ptpData[13]) << 8 + ((float)ptpData[12]);
-	x = ((float)ptpData[19]) << 24 + ((float)ptpData[18]) << 16 + ((float)ptpData[17]) << 8 + ((float)ptpData[16]);
-	y = ((float)ptpData[23]) << 24 + ((float)ptpData[22]) << 16 + ((float)ptpData[21]) << 8 + ((float)ptpData[20]);
-	z = ((float)ptpData[27]) << 24 + ((float)ptpData[26]) << 16 + ((float)ptpData[25]) << 8 + ((float)ptpData[24]);
-	
+	CtrlModbusReg(regIndex, dataLen, ptpData, true);
+
+	unsigned buffer(0);
+
+	buffer = (((unsigned)ptpData[3]) << 12) + (((unsigned)ptpData[2]) << 8) + (((unsigned)ptpData[1]) << 4) + (unsigned)ptpData[0];
+	dist	= *(float*)&buffer;
+
+	buffer = (((unsigned)ptpData[7]) << 12) + (((unsigned)ptpData[6]) << 8) + (((unsigned)ptpData[5]) << 4) + (unsigned)ptpData[4];
+	vel	= *(float*)&buffer;
+
+	buffer = (((unsigned)ptpData[11]) << 12) + (((unsigned)ptpData[10]) << 8) + (((unsigned)ptpData[9]) << 4) + (unsigned)ptpData[8];
+	acc	= *(float*)&buffer;
+
+	buffer = (((unsigned)ptpData[15]) << 12) + (((unsigned)ptpData[14]) << 8) + (((unsigned)ptpData[13]) << 4) + (unsigned)ptpData[12];
+	jerk	= *(float*)&buffer;
+
+	buffer = (((unsigned)ptpData[19]) << 12) + (((unsigned)ptpData[18]) << 8) + (((unsigned)ptpData[17]) << 4) + (unsigned)ptpData[16];
+	x	= *(float*)&buffer;
+
+	buffer = (((unsigned)ptpData[23]) << 12) + (((unsigned)ptpData[22]) << 8) + (((unsigned)ptpData[21]) << 4) + (unsigned)ptpData[20];
+	y	= *(float*)&buffer;
+
+	buffer = (((unsigned)ptpData[27]) << 12) + (((unsigned)ptpData[26]) << 8) + (((unsigned)ptpData[25]) << 4) + (unsigned)ptpData[24];
+	z	= *(float*)&buffer;	
 }
