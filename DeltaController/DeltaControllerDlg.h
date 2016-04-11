@@ -106,7 +106,6 @@ public:
 	double m_tTime;
 	afx_msg void OnBnClickedButton19();
 	afx_msg void OnBnClickedButtonTurn();
-	double m_turn_angle;
 
 private:
 
@@ -124,5 +123,7 @@ public:
 	CEdit m_bobotPos_y;
 	CEdit m_bobotPos_z;
 	afx_msg void OnBnClickedButtonBrake();
-	afx_msg void OnBnClickedButtonCarmera();
+//	afx_msg void OnBnClickedButtonCarmera();
+	afx_msg void OnBnClickedButtonCarmeraPwr();
+	afx_msg void OnBnClickedButton5();
 };

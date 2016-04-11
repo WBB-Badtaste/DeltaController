@@ -15,7 +15,7 @@ using std::vector;
 #define	COIL_INDEX_OF_BUFFER	300											//线圈在缓存中的起始地址
 #define REG_NUM_OF_BUFFER		COIL_INDEX_OF_BUFFER						//寄存器个数
 #define COIL_NUM_OF_BUFFER		(SYSTEM_BUFFER_NUM - REG_NUM_OF_BUFFER)		//线圈个数
-#define MODBUS_SEND_DELAY		0											//发送延时，降低示教器的数据处理量
+#define MODBUS_SEND_DELAY		100											//发送延时，降低示教器的数据处理量
 
 
 typedef struct modbus_send_buffer

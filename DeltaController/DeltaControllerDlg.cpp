@@ -76,7 +76,6 @@ CDeltaControllerDlg::CDeltaControllerDlg(CWnd* pParent /*=NULL*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_tTime = 0.0;
-	m_turn_angle = 0.0;
 
 
 	//  m_dRobotPos_x = 0.0;
@@ -112,8 +111,6 @@ void CDeltaControllerDlg::DoDataExchange(CDataExchange* pDX)
 	//  DDX_Text(pDX, IDC_EDIT5, m_tTime);
 	//	DDX_Text(pDX, IDC_EDIT5, m_tTime);
 	//	DDV_MinMaxDouble(pDX, m_tTime, 0.0, 100);
-	DDX_Text(pDX, IDC_EDIT6, m_turn_angle);
-	DDV_MinMaxDouble(pDX, m_turn_angle, -360, 360);
 	//  DDX_Text(pDX, IDC_EDIT_POS_X, m_dRobotPos_x);
 	//  DDX_Text(pDX, IDC_EDIT_POS_Y, m_dRobotPos_y);
 	//  DDX_Text(pDX, IDC_EDIT_POS_Z, m_dRobotPos_z);
@@ -165,7 +162,9 @@ BEGIN_MESSAGE_MAP(CDeltaControllerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON19, &CDeltaControllerDlg::OnBnClickedButton19)
 	ON_BN_CLICKED(IDC_BUTTON_TURN, &CDeltaControllerDlg::OnBnClickedButtonTurn)
 	ON_BN_CLICKED(IDC_BUTTON_BRAKE, &CDeltaControllerDlg::OnBnClickedButtonBrake)
-	ON_BN_CLICKED(IDC_BUTTON_CARMERA, &CDeltaControllerDlg::OnBnClickedButtonCarmera)
+//	ON_BN_CLICKED(IDC_BUTTON_CARMERA_PWR, &CDeltaControllerDlg::OnBnClickedButtonCarmera)
+ON_BN_CLICKED(IDC_BUTTON_CARMERA_PWR, &CDeltaControllerDlg::OnBnClickedButtonCarmeraPwr)
+ON_BN_CLICKED(IDC_BUTTON5, &CDeltaControllerDlg::OnBnClickedButton5)
 END_MESSAGE_MAP()
 
 
@@ -903,7 +902,21 @@ void CDeltaControllerDlg::OnBnClickedButtonBrake()
 }
 
 
-void CDeltaControllerDlg::OnBnClickedButtonCarmera()
+//void CDeltaControllerDlg::OnBnClickedButtonCarmera()
+//{
+//	// TODO: Add your control notification handler code here
+//	m_pMsm->SwitchToCtrlCarmeraState();
+//}
+
+
+void CDeltaControllerDlg::OnBnClickedButtonCarmeraPwr()
+{
+	// TODO: Add your control notification handler code here
+	m_pMsm->SwitchToCtrlCarmeraState();
+}
+
+
+void CDeltaControllerDlg::OnBnClickedButton5()
 {
 	// TODO: Add your control notification handler code here
 	m_pMsm->SwitchToCtrlCarmeraState();

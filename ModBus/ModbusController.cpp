@@ -33,6 +33,8 @@
 		pModbusObj->PrintStr(commReadBuffer, readNumber, true);
 #endif
 
+		Sleep(MODBUS_SEND_DELAY);
+
 		if (!crc_check(commReadBuffer, readNumber))//CRC校验
 		{
 			continue;
@@ -175,7 +177,7 @@ unsigned WINAPI CModbusController::SendThread(void* pParam)
 		EnterCriticalSection(&pModbusObj->m_cs_sendBuffer);
 		for (iter = pModbusObj->m_vec_commSendBuffer.begin(); iter != pModbusObj->m_vec_commSendBuffer.end(); )
 		{
-			Sleep(MODBUS_SEND_DELAY);
+			//Sleep(MODBUS_SEND_DELAY);
 
 			if (!pModbusObj->m_comm.Send(iter->buffer, iter->bufLen, lenSent))
 				continue;
@@ -577,11 +579,11 @@ BOOL CModbusController::GetPtpComand(float &x, float &y, float &z, float &vel)
 	unsigned coilIndex = 7; //ptp标记位Index
 	unsigned coilNum = 1;	//需要读的coil数
 	unsigned dataLen = 1;	//缓冲区长度
-	unsigned char ptpSignal(0x00);//返回数据
+	unsigned char signal[2];//返回数据
 
-	CtrlModbusCoil(coilIndex, coilNum, dataLen, &ptpSignal, true);
+	CtrlModbusCoil(coilIndex, coilNum, dataLen, signal, true);
 
-	if (ptpSignal & 0x01)//要除去其他干扰位
+	if (signal[0] & 0x01)//要除去其他干扰位
 	{
 		float dist(0.0), acc(0.0), jerk(0.0);
 		GetMotionPars(x, y, z, dist, vel, acc, jerk);
@@ -598,9 +600,11 @@ BOOL CModbusController::GetJogComand(float &dist, int &dire)
 	unsigned coilIndex = 1; //ptp标记位Index
 	unsigned coilNum = 6;	//需要读的coil数
 	unsigned dataLen = 1;	//缓冲区长度
-	unsigned char ptpSignal(0x00);//返回数据
+	unsigned char signal[2];//返回数据
 
-	if (ptpSignal & 0x01)//y轴正方向
+	CtrlModbusCoil(coilIndex, coilNum, dataLen, signal, true);
+
+	if (signal[0] & 0x01)//y轴正方向
 	{
 		dire = 1;
 
@@ -609,7 +613,7 @@ BOOL CModbusController::GetJogComand(float &dist, int &dire)
 
 		return TRUE;
 	}
-	else if(ptpSignal & 0x02)//y轴负方向
+	else if(signal[0] & 0x02)//y轴负方向
 	{
 		dire = 1;
 
@@ -620,7 +624,7 @@ BOOL CModbusController::GetJogComand(float &dist, int &dire)
 
 		return TRUE;
 	}
-	else if(ptpSignal & 0x04)//x轴正方向
+	else if(signal[0] & 0x04)//x轴正方向
 	{
 		dire = 2;
 
@@ -629,7 +633,7 @@ BOOL CModbusController::GetJogComand(float &dist, int &dire)
 
 		return TRUE;
 	}
-	else if(ptpSignal & 0x08)//x轴负方向
+	else if(signal[0] & 0x08)//x轴负方向
 	{
 		dire = 2;
 
@@ -640,7 +644,7 @@ BOOL CModbusController::GetJogComand(float &dist, int &dire)
 
 		return TRUE;
 	}
-	else if(ptpSignal & 0x10)//z轴正方向
+	else if(signal[0] & 0x10)//z轴正方向
 	{
 		dire = 3;
 
@@ -649,7 +653,7 @@ BOOL CModbusController::GetJogComand(float &dist, int &dire)
 
 		return TRUE;
 	}
-	else if(ptpSignal & 0x20)//z轴负方向
+	else if(signal[0] & 0x20)//z轴负方向
 	{
 		dire = 3;
 
@@ -670,11 +674,11 @@ BOOL CModbusController::GetHomeComand()
 	unsigned coilIndex = 9; //ptp标记位Index
 	unsigned coilNum = 1;	//需要读的coil数
 	unsigned dataLen = 1;	//缓冲区长度
-	unsigned char ptpSignal(0x00);//返回数据
+	unsigned char signal[2];//返回数据
 
-	CtrlModbusCoil(coilIndex, coilNum, dataLen, &ptpSignal, true);
+	CtrlModbusCoil(coilIndex, coilNum, dataLen, signal, true);
 
-	if (ptpSignal & 0x01)//要除去其他干扰位
+	if (signal[0] & 0x01)//要除去其他干扰位
 	{
 		return TRUE;
 	}

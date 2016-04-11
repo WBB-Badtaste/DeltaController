@@ -41,7 +41,7 @@ TriggerSelector	FrameStart
 TriggerDelayAbs	0
 TriggerSelector	FrameStart
 ExposureAuto	Off
-ExposureTimeRaw	5348
+ExposureTimeRaw	17103
 AcquisitionFrameRateAbs	1e+006
 AcquisitionFrameRateEnable	0
 ExposureMode	Timed

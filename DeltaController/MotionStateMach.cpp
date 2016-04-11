@@ -132,6 +132,8 @@ unsigned WINAPI CMotionStateMach::StateThread(void *pParam)
 		if (!pMSM->m_bInit && pMSM->m_status != INIT)
 		{
 			pMSM->SendString("System should be initialed first.");
+			pMSM->m_status = READY;
+			ResetEvent(pMSM->m_hEvMove);
 			continue;
 		}
 
@@ -167,11 +169,12 @@ unsigned WINAPI CMotionStateMach::StateThread(void *pParam)
 		case CTRL_BRAKE:
 			myStatus = pMSM->CtrlBrake();
 			pMSM->m_status = READY;
+			break;
 		case CTRL_CARMERA:
 			myStatus = pMSM->CtrlCarmera();
-			pMSM->m_status = READY;
+			break;
 		default:
-			pMSM->m_status = READY;
+			pMSM->m_status = NOT_READY;
 			break;
 		}
 		pMSM->StatusHandler(myStatus);
@@ -619,38 +622,36 @@ const unsigned int CMotionStateMach::CtrlBrake()
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
-	NYCE_DIGITAL_IO_ID io;
-	io.slotId = NYCE_SLOT0;
-
+	NYCE_DIGITAL_IO_ID io1, io2, io3;
 	uint32_t ioStatus1(0), ioStatus2(0), ioStatus3(0);
-	io.digIONr = NYCE_DIGOUT0;
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus1);
-	io.digIONr = NYCE_DIGOUT1;
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus2);
-	io.digIONr = NYCE_DIGOUT2;
-	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus3);
+
+	io1.slotId = NYCE_SLOT0;
+	io1.digIONr = NYCE_DIGOUT0;
+	io2.slotId = NYCE_SLOT0;
+	io2.digIONr = NYCE_DIGOUT1;
+	io3.slotId = NYCE_SLOT3;
+	io3.digIONr = NYCE_DIGOUT0;
+	
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io1, &ioStatus1);
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io2, &ioStatus2);
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io3, &ioStatus3);
 
 	if (ioStatus1 && ioStatus2 && ioStatus3)
 	{
-		io.digIONr = NYCE_DIGOUT0;
-		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
 
-		io.digIONr = NYCE_DIGOUT1;
-		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io1);
 
-		io.digIONr = NYCE_DIGOUT2;
-		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io2);
+
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io3);
 	}
 	else
 	{
-		io.digIONr = NYCE_DIGOUT0;
-		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io1);
 
-		io.digIONr = NYCE_DIGOUT1;
-		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io2);
 
-		io.digIONr = NYCE_DIGOUT2;
-		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io3);
 	}
 
 	return nyceStatus;
@@ -678,6 +679,25 @@ const unsigned int CMotionStateMach::CtrlCarmera()
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
 
 	}
+
+	return nyceStatus;
+}
+
+const unsigned int CMotionStateMach::CtrlNozzle()
+{
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	NYCE_DIGITAL_IO_ID io;
+	io.slotId = NYCE_SLOT3;
+	io.digIONr = NYCE_DIGOUT2;
+
+	uint32_t ioStatus(0);
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus);
+
+	if (ioStatus)
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+	else
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
 
 	return nyceStatus;
 }
@@ -830,6 +850,18 @@ bool CMotionStateMach::SwitchToCtrlCarmeraState()
 	else
 	{
 		m_status = CTRL_CARMERA;
+		SetEvent(m_hEvMove);
+		return true;
+	}
+}
+
+bool CMotionStateMach::SwitchToCtrlNozzleState()
+{
+	if (m_status != READY)
+		return false;
+	else
+	{
+		m_status = CTRL_NOZZLE;
 		SetEvent(m_hEvMove);
 		return true;
 	}

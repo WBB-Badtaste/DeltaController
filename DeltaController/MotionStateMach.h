@@ -19,7 +19,9 @@ typedef enum motionState
 	CATCH		= 5,
 	INIT		= 6,
 	CTRL_BRAKE  = 7,
-	CTRL_CARMERA = 8
+	CTRL_CARMERA = 8,
+	NOT_READY = 9,
+	CTRL_NOZZLE = 10
 }MOTION_STATE;
 
 
@@ -40,6 +42,7 @@ public:
 	bool SwitchToJogState(const double &dist, const int &dire);
 	bool SwitchToCtrlBrakeState();
 	bool SwitchToCtrlCarmeraState();
+	bool SwitchToCtrlNozzleState();
 	
 
 private:
@@ -66,6 +69,7 @@ private:
 	const uint32_t Circ();
 	const uint32_t CtrlBrake();
 	const uint32_t CtrlCarmera();
+	const uint32_t CtrlNozzle();
 
 
 
