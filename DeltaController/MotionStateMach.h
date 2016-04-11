@@ -17,7 +17,9 @@ typedef enum motionState
 	DOOR		= 3,
 	READY		= 4,
 	CATCH		= 5,
-	INIT		= 6
+	INIT		= 6,
+	CTRL_BRAKE  = 7,
+	CTRL_CARMERA = 8
 }MOTION_STATE;
 
 
@@ -28,6 +30,7 @@ public:
 	CMotionStateMach(HWND);
 	~CMotionStateMach(void);
 
+	bool FinlishMatch(const double &x, const double &y, const double &angle, const bool &bSuccess);
 	bool SwitchToCatchState();
 	bool SwitchToInitState();
 	bool SwitchToDoorState(const double &vel);
@@ -35,7 +38,9 @@ public:
 	bool SwitchToHomeState();
 	bool SwitchToCircState(const double &vel);
 	bool SwitchToJogState(const double &dist, const int &dire);
-	bool FinlishMatch(const double &x, const double &y, const double &angle, const bool &bSuccess);
+	bool SwitchToCtrlBrakeState();
+	bool SwitchToCtrlCarmeraState();
+	
 
 private:
 	//匹配结果
@@ -59,6 +64,10 @@ private:
 	const uint32_t Ptp();
 	const uint32_t Home();
 	const uint32_t Circ();
+	const uint32_t CtrlBrake();
+	const uint32_t CtrlCarmera();
+
+
 
 	//ROCKS状态处理函数
 	void StatusHandler(uint32_t &);

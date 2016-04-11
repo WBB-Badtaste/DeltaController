@@ -109,7 +109,8 @@ unsigned WINAPI CMotionStateMach::AssistThread(void *pParam)
 		if (pMSM->m_mc.GetHomeComand())
 			pMSM->SwitchToHomeState();
 
-		float jog_dist(0.0), jog_dire(0.0);
+		float jog_dist(0.0);
+		int jog_dire(0);
 		if (pMSM->m_mc.GetJogComand(jog_dist, jog_dire))
 			pMSM->SwitchToJogState(jog_dist, jog_dire);
 	}
@@ -163,6 +164,12 @@ unsigned WINAPI CMotionStateMach::StateThread(void *pParam)
 			myStatus = pMSM->Init();
 			pMSM->m_status = READY;
 			break;
+		case CTRL_BRAKE:
+			myStatus = pMSM->CtrlBrake();
+			pMSM->m_status = READY;
+		case CTRL_CARMERA:
+			myStatus = pMSM->CtrlCarmera();
+			pMSM->m_status = READY;
 		default:
 			pMSM->m_status = READY;
 			break;
@@ -608,6 +615,73 @@ const uint32_t CMotionStateMach::Circ()
 	return nyceStatus;
 }
 
+const unsigned int CMotionStateMach::CtrlBrake()
+{
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	NYCE_DIGITAL_IO_ID io;
+	io.slotId = NYCE_SLOT0;
+
+	uint32_t ioStatus1(0), ioStatus2(0), ioStatus3(0);
+	io.digIONr = NYCE_DIGOUT0;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus1);
+	io.digIONr = NYCE_DIGOUT1;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus2);
+	io.digIONr = NYCE_DIGOUT2;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus3);
+
+	if (ioStatus1 && ioStatus2 && ioStatus3)
+	{
+		io.digIONr = NYCE_DIGOUT0;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+
+		io.digIONr = NYCE_DIGOUT1;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+
+		io.digIONr = NYCE_DIGOUT2;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+	}
+	else
+	{
+		io.digIONr = NYCE_DIGOUT0;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+
+		io.digIONr = NYCE_DIGOUT1;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+
+		io.digIONr = NYCE_DIGOUT2;
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+	}
+
+	return nyceStatus;
+}
+
+const unsigned int CMotionStateMach::CtrlCarmera()
+{
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	NYCE_DIGITAL_IO_ID io;
+	io.slotId = NYCE_SLOT2;
+
+	uint32_t ioStatus1(0);
+	io.digIONr = NYCE_DIGOUT1;
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus1);
+
+
+	if (ioStatus1)
+	{
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
+
+	}
+	else
+	{
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
+
+	}
+
+	return nyceStatus;
+}
+
 bool CMotionStateMach::FinlishMatch(const double &x, const double &y, const double &angle, const bool &bSuccess)
 {
 	if (bSuccess)
@@ -737,35 +811,29 @@ bool CMotionStateMach::SwitchToJogState(const double &dist, const int &dire)
 	}
 }
 
-// 	NYCE_STATUS nyceStatus(NYCE_OK);
-// 
-// 	ROCKS_COORD pos;
-// 	pos.type = KIN_COORD;
-// 	pos.position.x = 0;
-// 	pos.position.y = 0;
-// 	pos.position.z = 0;
+bool CMotionStateMach::SwitchToCtrlBrakeState()
+{
+	if (m_status != READY)
+		return false;
+	else
+	{
+		m_status = CTRL_BRAKE;
+		SetEvent(m_hEvMove);
+		return true;
+	}
+}
 
-// 	UpdateData(TRUE);
-// 	switch (m_motion_par_direc)
-// 	{
-// 	case 0:
-// 		pos.position.x = -10;
-// 		break;
-// 	case 1:
-// 		pos.position.y = -10;
-// 		break;
-// 	case 2:
-// 		pos.position.z = -10;
-// 		break;
-// 	}
-// 
-// 	TRAJ_PARS trajPars;
-// 	trajPars.velocity = JOG_VEL;
-// 	trajPars.acceleration = trajPars.velocity * 100;
-// 	trajPars.splineTime = 0.01;
-// 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksPtpDelta(pos, trajPars, TRUE);
-// 
-// 	StatusHandle(nyceStatus);
+bool CMotionStateMach::SwitchToCtrlCarmeraState()
+{
+	if (m_status != READY)
+		return false;
+	else
+	{
+		m_status = CTRL_CARMERA;
+		SetEvent(m_hEvMove);
+		return true;
+	}
+}
 
 void CMotionStateMach::StatusHandler(uint32_t &nyceStatus)
 {

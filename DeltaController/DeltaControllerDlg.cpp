@@ -164,6 +164,8 @@ BEGIN_MESSAGE_MAP(CDeltaControllerDlg, CDialogEx)
 	ON_EN_CHANGE(IDC_EDIT5, &CDeltaControllerDlg::OnEnChangeEdit5)
 	ON_BN_CLICKED(IDC_BUTTON19, &CDeltaControllerDlg::OnBnClickedButton19)
 	ON_BN_CLICKED(IDC_BUTTON_TURN, &CDeltaControllerDlg::OnBnClickedButtonTurn)
+	ON_BN_CLICKED(IDC_BUTTON_BRAKE, &CDeltaControllerDlg::OnBnClickedButtonBrake)
+	ON_BN_CLICKED(IDC_BUTTON_CARMERA, &CDeltaControllerDlg::OnBnClickedButtonCarmera)
 END_MESSAGE_MAP()
 
 
@@ -863,4 +865,17 @@ void CDeltaControllerDlg::PrintStr(const CString &str)
 	string += str;
 	string += "\n";
 	m_listBox.AddString(string);
+}
+
+void CDeltaControllerDlg::OnBnClickedButtonBrake()
+{
+	// TODO: Add your control notification handler code here
+	m_pMsm->SwitchToCtrlBrakeState();
+}
+
+
+void CDeltaControllerDlg::OnBnClickedButtonCarmera()
+{
+	// TODO: Add your control notification handler code here
+	m_pMsm->SwitchToCtrlCarmeraState();
 }

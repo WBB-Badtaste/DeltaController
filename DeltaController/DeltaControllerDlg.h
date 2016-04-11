@@ -120,4 +120,6 @@ public:
 	CEdit m_bobotPos_x;
 	CEdit m_bobotPos_y;
 	CEdit m_bobotPos_z;
+	afx_msg void OnBnClickedButtonBrake();
+	afx_msg void OnBnClickedButtonCarmera();
 };

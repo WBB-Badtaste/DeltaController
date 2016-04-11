@@ -44,7 +44,7 @@ public:
 	//--20160406
 	BOOL GetPtpComand(float &x, float &y, float &z, float &vel);
 	BOOL GetHomeComand();
-	BOOL GetJogComand(float &dist, float &dire);
+	BOOL GetJogComand(float &dist, int &dire);
 
 private:
 	//--20160406

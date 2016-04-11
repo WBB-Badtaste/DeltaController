@@ -51,7 +51,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NT;WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\ModBus;C:\Program Files\Rexroth\NYCe4000\dev\inc;$(PYLONC_ROOT)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Basler\pylon 4\pylonc\include;$(SolutionDir)\ModBus;C:\Program Files\Rexroth\NYCe4000\dev\inc;$(PYLONC_ROOT)\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <MinimalRebuild>false</MinimalRebuild>

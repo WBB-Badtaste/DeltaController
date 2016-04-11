@@ -592,7 +592,7 @@ BOOL CModbusController::GetPtpComand(float &x, float &y, float &z, float &vel)
 		return FALSE;
 }
 
-BOOL CModbusController::GetJogComand(float &dist, float &dire)
+BOOL CModbusController::GetJogComand(float &dist, int &dire)
 {
 	//读取PTP标记
 	unsigned coilIndex = 1; //ptp标记位Index
