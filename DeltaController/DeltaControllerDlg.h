@@ -109,6 +109,9 @@ public:
 	double m_turn_angle;
 
 private:
+
+	bool m_bInitVision;
+
 	//×´Ì¬»ú
 	CMotionStateMach *m_pMsm;
 

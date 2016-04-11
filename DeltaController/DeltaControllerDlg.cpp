@@ -72,7 +72,7 @@ CDeltaControllerDlg::CDeltaControllerDlg(CWnd* pParent /*=NULL*/)
 	, m_edit_locate_result(_T(""))
 	, m_edit_match_time(0.000)
 	, m_tTime(0.0)
-	//, m_msm(this->m_hWnd)
+	, m_bInitVision(false)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_tTime = 0.0;
@@ -200,52 +200,40 @@ BOOL CDeltaControllerDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	//初始化相机
-	CSMT1408CameraOperate::InitCameraEnvirionment();//初始化相机 仅能调用一次
-	if(gCameras.InitCameras() == false) 
-		return FALSE;//初始化相机 仅能调用一次
-// 	for(int i=0;i<CAMERAS;i++){
-// 		m_combctr_cameraName.AddString(gCameras.mCameraShowName[i]);
-// 	}
-// 	if(m_combctr_cameraName.GetCount()>0) m_combctr_cameraName.SetCurSel(0);
 
-	cwSetReversePara(FALSE);//
+// 	//初始化相机
+// 	CSMT1408CameraOperate::InitCameraEnvirionment();//初始化相机 仅能调用一次
+// 	if(gCameras.InitCameras() == false) 
+// 		return FALSE;//初始化相机 仅能调用一次
+// 
+// 	cwSetReversePara(FALSE);//
+// 
+// 	//cwVision 显示图像相关
+// 	m_visionCW.InitParameters();
+// 	m_visionCW.SetImageInf(NULL,8, g_imgWidth,g_imgHeight);
+// 	m_visionCW.SetDisplayWnd(((CStatic*)GetDlgItem(IDC_IMAGE_SHOW))->m_hWnd);
+// 	m_visionCW.SetMainWnd(m_hWnd);
+// 
+// 	//获取源图控件的位置
+// 	CRect rect;
+// 	GetDlgItem( IDC_IMAGE_SHOW )->GetWindowRect(&rect);
+// 	ScreenToClient(rect);//转化为对话框上的相对位置
+// 	m_visionCW.SetDisplayRect(rect);
+// 
+// 	//初始化mark标定参数
+// 	m_combctr_markShape.AddString("圆形");
+// 	m_combctr_markShape.AddString("矩形");
+// 	m_combctr_markShape.AddString("任意图像");
+// 	m_combctr_markShape.SetCurSel(2);
+// 
+// 
+// 	OFFSETZOOM zoom;
+// 	zoom.x = 0;
+// 	zoom.y = 0;
+// 	zoom.scale = 0.5;
+// 
+// 	m_visionCW.SetDisplayOffset(zoom);
 
-	//cwVision 显示图像相关
-	m_visionCW.InitParameters();
-	m_visionCW.SetImageInf(NULL,8, g_imgWidth,g_imgHeight);
-	m_visionCW.SetDisplayWnd(((CStatic*)GetDlgItem(IDC_IMAGE_SHOW))->m_hWnd);
-	m_visionCW.SetMainWnd(m_hWnd);
-
-	//获取源图控件的位置
-	CRect rect;
-	GetDlgItem( IDC_IMAGE_SHOW )->GetWindowRect(&rect);
-	ScreenToClient(rect);//转化为对话框上的相对位置
-	m_visionCW.SetDisplayRect(rect);
-
-	// 	m_combctr_cameraName.AddString("DMK 23G274 [1]");
-	// 	m_combctr_cameraName.SetCurSel(0);	
-
-	//初始化mark标定参数
-	m_combctr_markShape.AddString("圆形");
-//	m_combctr_markShape.AddString("正方形");
-	m_combctr_markShape.AddString("矩形");
-// 	m_combctr_markShape.AddString("带拟合的矩形");
-// 	m_combctr_markShape.AddString("角点");
-	m_combctr_markShape.AddString("任意图像");
-	m_combctr_markShape.SetCurSel(2);
-	//m_combctr_markShape
-
-	//	m_visionCW.SetFullScreen();
-
-	OFFSETZOOM zoom;
-	zoom.x = 0;
-	zoom.y = 0;
-	zoom.scale = 0.5;
-
-	m_visionCW.SetDisplayOffset(zoom);
-
-	//testing
 	m_pMsm = new CMotionStateMach(this->m_hWnd);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -272,11 +260,15 @@ void CDeltaControllerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 void CDeltaControllerDlg::OnPaint()
 {
-	HWND showWnd = GetDlgItem(IDC_IMAGE_SHOW)->m_hWnd;
-	m_visionCW.SetDisplayWnd(showWnd);
-	m_visionCW.DispalyImage();
- 	m_visionCW.DisplayROI();
-	m_visionCW.DisplayMatchResult();
+	if(m_bInitVision)
+	{
+		HWND showWnd = GetDlgItem(IDC_IMAGE_SHOW)->m_hWnd;
+		m_visionCW.SetDisplayWnd(showWnd);
+		m_visionCW.DispalyImage();
+		m_visionCW.DisplayROI();
+		m_visionCW.DisplayMatchResult();
+	}
+	
 
 	if (IsIconic())
 	{
@@ -576,6 +568,44 @@ void CDeltaControllerDlg::OnBnClickedBelt()//传送带控制
 
 void CDeltaControllerDlg::OnBnClickedBtnOpencamera()
 {
+	if (!m_bInitVision)
+	{
+		//初始化相机
+		CSMT1408CameraOperate::InitCameraEnvirionment();//初始化相机 仅能调用一次
+		if(gCameras.InitCameras() == false) 
+			return ;//初始化相机 仅能调用一次
+
+		cwSetReversePara(FALSE);//
+
+		//cwVision 显示图像相关
+		m_visionCW.InitParameters();
+		m_visionCW.SetImageInf(NULL,8, g_imgWidth,g_imgHeight);
+		m_visionCW.SetDisplayWnd(((CStatic*)GetDlgItem(IDC_IMAGE_SHOW))->m_hWnd);
+		m_visionCW.SetMainWnd(m_hWnd);
+
+		//获取源图控件的位置
+		CRect rect;
+		GetDlgItem( IDC_IMAGE_SHOW )->GetWindowRect(&rect);
+		ScreenToClient(rect);//转化为对话框上的相对位置
+		m_visionCW.SetDisplayRect(rect);
+
+		//初始化mark标定参数
+		m_combctr_markShape.AddString("圆形");
+		m_combctr_markShape.AddString("矩形");
+		m_combctr_markShape.AddString("任意图像");
+		m_combctr_markShape.SetCurSel(2);
+
+
+		OFFSETZOOM zoom;
+		zoom.x = 0;
+		zoom.y = 0;
+		zoom.scale = 0.5;
+
+		m_visionCW.SetDisplayOffset(zoom);
+
+		m_bInitVision = true;
+	}
+
 	UpdateData(TRUE);
 
 	CString btn_name;
@@ -602,7 +632,6 @@ void CDeltaControllerDlg::OnBnClickedBtnOpencamera()
 bool captureComplate = true;
 void CDeltaControllerDlg::OnTimer(UINT_PTR nIDEvent)
 {
-
 	switch(nIDEvent){
 	case TIMER_CAPTURE_BASLER_IMAGE:
 		{
