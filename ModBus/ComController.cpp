@@ -67,14 +67,16 @@ CComController::CComController(void):
 	//修改波特率
 
 	dcb.BaudRate = DEFAULT_COMM_RATE;
-	dcb.fParity = 1;
+	dcb.fParity = 0;
 	dcb.Parity = 2;
+	dcb.StopBits = ONESTOPBIT;
+	dcb.ByteSize = 8;
 
 	//重新设置参数
 
 	SetCommState(m_hComm, &dcb);
 
-	GetCommState(m_hComm, &dcb);
+	//GetCommState(m_hComm, &dcb);
 
 	SetupComm(m_hComm, 1024, 1024); //输入缓冲区和输出缓冲区的大小都是1024
 
@@ -131,8 +133,11 @@ CComController::CComController(LPCSTR name, DWORD baudRate)
 	GetCommState(m_hComm, &dcb);
 
 	//修改波特率
-	dcb.BaudRate = baudRate;
+	dcb.BaudRate = DEFAULT_COMM_RATE;
+	dcb.fParity = 0;
 	dcb.Parity = 2;
+	dcb.StopBits = ONESTOPBIT;
+	dcb.ByteSize = 8;
 
 	//重新设置参数
 	SetCommState(m_hComm, &dcb);

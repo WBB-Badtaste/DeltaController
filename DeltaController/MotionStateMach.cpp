@@ -81,6 +81,16 @@ unsigned WINAPI CMotionStateMach::AssistThread(void *pParam)
 	NYCE_STATUS myStatus(NYCE_OK);
 
 	double dRobotPos[6];
+	double dJointPos[3];
+	double dJointVel[3];
+	unsigned short regDatas[18];
+
+	ZeroMemory(regDatas, 18 * sizeof(unsigned short));
+	ZeroMemory(dRobotPos, 6 * sizeof(double));
+	ZeroMemory(dJointPos, 3 * sizeof(double));
+	ZeroMemory(dJointVel, 3 * sizeof(double));
+
+	float buffer(0.0);
 
 	while(WaitForSingleObject(pMSM->m_hEvRPT, 0) == WAIT_OBJECT_0)
 	{
@@ -98,8 +108,68 @@ unsigned WINAPI CMotionStateMach::AssistThread(void *pParam)
 			Sleep(1000);
 			continue;
 		}
+		
 
+		//读取Join数据
+		for (uint32_t ax = 0; ax < NUM_AXES; ax++)
+		{
+			myStatus = NyceError(myStatus) ? myStatus : SacReadVariable(axId[ax], SAC_VAR_SETPOINT_POS, &dJointPos[ax]);
+
+			myStatus = NyceError(myStatus) ? myStatus : SacReadVariable(axId[ax], SAC_VAR_SETPOINT_VEL, &dJointVel[ax]);
+		}
+
+		//读取有问题，添加异常处理
+		if (NyceError(myStatus))
+		{
+			Sleep(100);
+			continue;
+		}
+
+		//UI上显示机器人位置
 		::SendMessage(pMSM->m_hMainWnd, WM_UPDATE_ROBOT_POS, NULL, (LPARAM)dRobotPos);
+
+		//将数据存入modbus寄存器中
+		buffer =(float)dRobotPos[0];
+		regDatas[0] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+		regDatas[1] = (*(unsigned*)&buffer & 0x0000ffff);
+
+		buffer =(float)dRobotPos[1];
+		regDatas[2] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+		regDatas[3] = (*(unsigned*)&buffer & 0x0000ffff);
+		
+		buffer =(float)dRobotPos[2];
+		regDatas[4] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+		regDatas[5] = (*(unsigned*)&buffer & 0x0000ffff);
+
+		buffer =(float)dJointPos[0];
+		regDatas[6] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+		regDatas[7] = (*(unsigned*)&buffer & 0x0000ffff);
+
+		buffer =(float)dJointPos[1];
+		regDatas[8] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+		regDatas[9] = (*(unsigned*)&buffer & 0x0000ffff);
+
+		buffer =(float)dJointPos[2];
+		regDatas[10] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+		regDatas[11] = (*(unsigned*)&buffer & 0x0000ffff);
+		
+		buffer =(float)dJointVel[0];
+		regDatas[12] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+		regDatas[13] = (*(unsigned*)&buffer & 0x0000ffff);
+
+		buffer =(float)dJointVel[1];
+		regDatas[14] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+		regDatas[15] = (*(unsigned*)&buffer & 0x0000ffff);
+
+		buffer =(float)dJointVel[2];
+		regDatas[16] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+		regDatas[17] = (*(unsigned*)&buffer & 0x0000ffff);
+
+		pMSM->m_mc.WriteReg(1, 18, regDatas);
+
+		
+
+		
 
 		//读取modbus指令
 		float ptp_x(0.0), ptp_y(0.0), ptp_z(0.0), ptp_vel(0.0);
@@ -172,6 +242,11 @@ unsigned WINAPI CMotionStateMach::StateThread(void *pParam)
 			break;
 		case CTRL_CARMERA:
 			myStatus = pMSM->CtrlCarmera();
+			pMSM->m_status = READY;
+			break;
+		case CTRL_NOZZLE:
+			myStatus = pMSM->CtrlNozzle();
+			pMSM->m_status = READY;
 			break;
 		default:
 			pMSM->m_status = NOT_READY;
@@ -478,6 +553,49 @@ const uint32_t CMotionStateMach::Init()
 
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksInitMatrix();
 
+	//初始化Modbus寄存器数据
+
+	double dRobotPos[6];
+	unsigned short regDatas[14];
+	float buffer(0.0);
+	double dist(100), vel(1000), acc(10000), jerk(100000);
+
+	ZeroMemory(dRobotPos, 6 * sizeof(double));
+	ZeroMemory(regDatas, 14 * sizeof(unsigned short));
+
+	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksReadPosDelta(dRobotPos);
+
+	//将数据存入modbus寄存器中
+	buffer =(float)dist;
+	regDatas[0] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+	regDatas[1] = (*(unsigned*)&buffer & 0x0000ffff);
+
+	buffer =(float)vel;
+	regDatas[2] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+	regDatas[3] = (*(unsigned*)&buffer & 0x0000ffff);
+
+	buffer =(float)acc;
+	regDatas[4] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+	regDatas[5] = (*(unsigned*)&buffer & 0x0000ffff);
+
+	buffer =(float)jerk;
+	regDatas[6] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+	regDatas[7] = (*(unsigned*)&buffer & 0x0000ffff);
+
+	buffer =(float)dRobotPos[0];
+	regDatas[8] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+	regDatas[9] = (*(unsigned*)&buffer & 0x0000ffff);
+
+	buffer =(float)dRobotPos[1];
+	regDatas[10] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+	regDatas[11] = (*(unsigned*)&buffer & 0x0000ffff);
+
+	buffer =(float)dRobotPos[2];
+	regDatas[12] = (*(unsigned*)&buffer & 0xffff0000) >> 16;
+	regDatas[13] = (*(unsigned*)&buffer & 0x0000ffff);
+
+	m_mc.WriteReg(19, 14, regDatas);
+
 	if (NyceSuccess(nyceStatus))
 		m_bInit = true;
 	else
@@ -662,7 +780,7 @@ const unsigned int CMotionStateMach::CtrlCarmera()
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
 	NYCE_DIGITAL_IO_ID io;
-	io.slotId = NYCE_SLOT2;
+	io.slotId = NYCE_SLOT3;
 
 	uint32_t ioStatus1(0);
 	io.digIONr = NYCE_DIGOUT1;
