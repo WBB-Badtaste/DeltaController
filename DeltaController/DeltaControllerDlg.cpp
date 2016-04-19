@@ -235,6 +235,15 @@ BOOL CDeltaControllerDlg::OnInitDialog()
 
 	m_pMsm = new CMotionStateMach(this->m_hWnd);
 
+
+	//TEST
+	m_visionCW.LoadMod("C:\\mod.mod");
+
+	m_visionCW.FindModel();
+
+	m_visionCW.m_pImage;
+
+
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -869,7 +878,7 @@ void CDeltaControllerDlg::OnEnChangeEdit5()
 void CDeltaControllerDlg::OnBnClickedButton19()
 {
 	// TODO: Add your control notification handler code here
-	m_visionCW.SaveMod("C:/mod.mod");
+	m_visionCW.SaveMod("C:\\mod.mod");
 }
 
 
