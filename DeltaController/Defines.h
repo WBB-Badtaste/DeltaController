@@ -30,7 +30,7 @@ static NHI_NODE noId[ NUM_NODE ];
 //皮带轴
 #define BELT_VEL 200 //传送带速度，单位mm/s
 #define BELT_BASE_RATE 15518.2130329563124//15548.8947763849895 //实际移动长度与编码器值的比值
-static double THRESHOLD_TIME = 0.25; //计算时间阈值，单位S
+static double THRESHOLD_TIME = 0;//0.25; //计算时间阈值，单位S
 // double g_encoderMinRange;
 // double g_encoderMaxRange;
 
@@ -62,7 +62,7 @@ static ROCKS_COORD g_pickPos;
 #define ASSIST_DELAY 500//协助线程的时间间隔
 
 //回零运动参数
-#define HOME_VEL 500
+#define HOME_VEL 50
 
 //Jog参数
 #define JOG_VEL 50

@@ -513,6 +513,7 @@ static const double SPIRAL_MAX_RADIAL_ACC = SPIRAL_MAX_RADIAL_SPEED * 100;
 
 static ROCKS_TRAJ_SEGMENT_SPIRAL_PARS_EX segSpiralPars1, segSpiralPars2, segSpiralPars3, segSpiralPars4;
 
+//拓展算法，慎用
 static NYCE_STATUS RocksSpiralExDoorDelta()
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -683,9 +684,10 @@ static NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &
 	//始末点水平距离
 	const double distance(sqrt((doorPars.endPos.position.x - doorPars.startPos.position.x) * (doorPars.endPos.position.x - doorPars.startPos.position.x) + (doorPars.endPos.position.y - doorPars.startPos.position.y) * (doorPars.endPos.position.y - doorPars.startPos.position.y)));
 
-	//速度比率
+	//计算速度比率
+	const double velFac(1.1);//权重因子，改善下降过程出现的力矩跳变问题
 	const double velRatio1(doorPars.riseHeight / (distance / 2 + doorPars.riseHeight));
-	const double velRatio2((-(doorPars.endPos.position.z - doorPars.startPos.position.z) +  doorPars.riseHeight) / (distance / 2 + (-(doorPars.endPos.position.z - doorPars.startPos.position.z) +  doorPars.riseHeight)));
+	const double velRatio2((-(doorPars.endPos.position.z - doorPars.startPos.position.z) +  doorPars.riseHeight) / (distance / 2 * velFac + (-(doorPars.endPos.position.z - doorPars.startPos.position.z) +  doorPars.riseHeight)));
 
 	//始末点连线在水平面的投影方向
 	const double angleZ(atan2(doorPars.endPos.position.y - doorPars.startPos.position.y, doorPars.endPos.position.x - doorPars.startPos.position.x));
@@ -852,13 +854,39 @@ static NYCE_STATUS RocksInitMatrix()
 {
 	g_pTransfMatrix = new TRANSF_MATRIX[NUM_COORD_TYPES]();
 
-	double x_base(0.0), y_belt(-13107200), x_camera(799.107), y_camera(726.886), z_kin(-876.43);
+	//double x_base(0.0), y_belt(-13107200), x_camera(799.107), y_camera(726.886), z_kin(-876.43);
+	
+	//TEST
+	//皮带移动后的目标坐标
+	double x_camera_a(633.064), y_camera_a(408.864), z_camera_a(0);
+	//皮带移动移动距离
+	double x_belt(-13107200), y_belt(0), z_belt(0);
+	double x_belt_c(x_belt / BELT_BASE_RATE * PIXEL_BASE_RATE), y_belt_c(y_belt / BELT_BASE_RATE * PIXEL_BASE_RATE), z_belt_c(z_belt / BELT_BASE_RATE * PIXEL_BASE_RATE);
+	//皮带移动前的目标坐标
+	double x_kin_o(-49.849414), y_kin_o(-139.80261), z_kin_o(-884);
+	double x_camera_o(x_kin_o / KIN_BASE_RATE * PIXEL_BASE_RATE), y_camera_o(y_kin_o / KIN_BASE_RATE * PIXEL_BASE_RATE), z_camera_o(z_kin_o / KIN_BASE_RATE * PIXEL_BASE_RATE);
+
+// 	g_pTransfMatrix[CAMERA_COORD].r.x	= 0;
+// 	g_pTransfMatrix[CAMERA_COORD].r.y	= M_PI;
+// 	g_pTransfMatrix[CAMERA_COORD].r.z	= -M_PI_2;//-0.014813;//相机安装导致与世界坐标成90度夹角
+// 	g_pTransfMatrix[CAMERA_COORD].t.x	= x_belt / BELT_BASE_RATE * PIXEL_BASE_RATE - x_camera * cos(g_pTransfMatrix[CAMERA_COORD].r.z) - y_camera * sin(g_pTransfMatrix[CAMERA_COORD].r.z) - x_base * PIXEL_BASE_RATE;
+// 	g_pTransfMatrix[CAMERA_COORD].t.y	= x_camera * sin(g_pTransfMatrix[CAMERA_COORD].r.z) - y_camera * cos(g_pTransfMatrix[CAMERA_COORD].r.z) - y_base * PIXEL_BASE_RATE;
+// 	g_pTransfMatrix[CAMERA_COORD].t.z	= z_base * PIXEL_BASE_RATE;
+// 	g_pTransfMatrix[CAMERA_COORD].zoom	= PIXEL_BASE_RATE;
+
+
+	//旋转矩阵
 	g_pTransfMatrix[CAMERA_COORD].r.x	= 0;
 	g_pTransfMatrix[CAMERA_COORD].r.y	= M_PI;
-	g_pTransfMatrix[CAMERA_COORD].r.z	= -0.014813;
-	g_pTransfMatrix[CAMERA_COORD].t.x	= x_camera * cos(g_pTransfMatrix[CAMERA_COORD].r.z) - y_camera * sin(g_pTransfMatrix[CAMERA_COORD].r.z);
-	g_pTransfMatrix[CAMERA_COORD].t.y	= y_belt / BELT_BASE_RATE * PIXEL_BASE_RATE - x_camera * sin(g_pTransfMatrix[CAMERA_COORD].r.z) - y_camera * cos(g_pTransfMatrix[CAMERA_COORD].r.z);
-	g_pTransfMatrix[CAMERA_COORD].t.z	= z_kin / KIN_BASE_RATE * PIXEL_BASE_RATE;
+	g_pTransfMatrix[CAMERA_COORD].r.z	= M_PI_2;
+
+	//平移矩阵
+	//注意这里假设皮带延世界坐标系x轴运动
+	g_pTransfMatrix[CAMERA_COORD].t.x	= x_camera_o + x_belt_c + x_camera_a * cos(g_pTransfMatrix[CAMERA_COORD].r.z) - y_camera_a * sin(g_pTransfMatrix[CAMERA_COORD].r.z);
+	g_pTransfMatrix[CAMERA_COORD].t.y	= y_camera_o + y_belt_c - x_camera_a * sin(g_pTransfMatrix[CAMERA_COORD].r.z) - y_camera_a * cos(g_pTransfMatrix[CAMERA_COORD].r.z);
+	//g_pTransfMatrix[CAMERA_COORD].t.x	= x_camera_o + x_belt_c + x_camera_a * cos(g_pTransfMatrix[CAMERA_COORD].r.z) + y_camera_a * sin(g_pTransfMatrix[CAMERA_COORD].r.z);
+	//g_pTransfMatrix[CAMERA_COORD].t.y	= y_camera_o + y_belt_c + x_camera_a * sin(g_pTransfMatrix[CAMERA_COORD].r.z) - y_camera_a * cos(g_pTransfMatrix[CAMERA_COORD].r.z);
+	g_pTransfMatrix[CAMERA_COORD].t.z	= z_camera_o + z_belt_c - z_camera_a;
 	g_pTransfMatrix[CAMERA_COORD].zoom	= PIXEL_BASE_RATE;
 
 	g_pTransfMatrix[KIN_COORD].zoom = KIN_BASE_RATE;
@@ -912,15 +940,15 @@ static NYCE_STATUS RocksCalcCatchPos(const TRAJ_PARS &motionPars, const ROCKS_CO
 	double moveLen = (encoderPos - placeTargetPos_kin.cuEncoderValue) / BELT_BASE_RATE;//相对放置点而言，目标已经向前行了一段距离
 	ROCKS_COORD cuTargetPos_kin;
 	cuTargetPos_kin.type = KIN_COORD;
-	cuTargetPos_kin.position.x = placeTargetPos_kin.position.x;
-	cuTargetPos_kin.position.y = placeTargetPos_kin.position.y + moveLen * KIN_BASE_RATE;
+	cuTargetPos_kin.position.x = placeTargetPos_kin.position.x + moveLen * KIN_BASE_RATE;
+	cuTargetPos_kin.position.y = placeTargetPos_kin.position.y;
 	cuTargetPos_kin.position.z = placeTargetPos_kin.position.z + endBufHeightOffset * KIN_BASE_RATE;
 
 	//传送带在皮带坐标系中的速度
 	ROCKS_COORD beltVel_belt;
 	beltVel_belt.type = BELT_COORD;
-	beltVel_belt.position.x = 0;
-	beltVel_belt.position.y = encoderVel;
+	beltVel_belt.position.x = encoderVel;
+	beltVel_belt.position.y = 0;
 	beltVel_belt.position.z = 0;
 
 	//传送带在机构坐标系中的速度

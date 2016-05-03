@@ -127,7 +127,7 @@
       <Filter>Header Files\MotionState</Filter>
     </ClInclude>
     <ClInclude Include="Defines.h">
-      <Filter>Header Files\MotionState</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

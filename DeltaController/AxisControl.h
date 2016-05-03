@@ -3,6 +3,7 @@
 #include <nyceapi.h>
 #include <sacapi.h>
 
+//终止控制轴
 NYCE_STATUS TermAxis(const uint32_t &axesNum, const SAC_AXIS* const axId)
 {
 	SAC_STATE sacState;
@@ -32,7 +33,7 @@ NYCE_STATUS TermAxis(const uint32_t &axesNum, const SAC_AXIS* const axId)
 	return nyceStatus;
 }
 
-
+//初始化轴，适用三洋编码器协议
 NYCE_STATUS InitAxisSanyo(const uint32_t &axesNum, SAC_AXIS* const axId, const char *axName[])
 {
 	SAC_SPG_STATE sacSpgState;
@@ -91,7 +92,7 @@ INACTIVE:		nyceStatus =  NyceError(nyceStatus) ? nyceStatus : SacHome( axId[ ax 
 	return nyceStatus;
 }
 
-
+//初始化轴，用在Delta机器人上
 NYCE_STATUS InitAxisRexroth(const uint32_t &axesNum, SAC_AXIS* const axId, const char *axName[])
 {
 	SAC_SPG_STATE sacSpgState;

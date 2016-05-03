@@ -68,7 +68,7 @@ CComController::CComController(void):
 
 	dcb.BaudRate = DEFAULT_COMM_RATE;
 	dcb.fParity = 0;
-	dcb.Parity = 2;
+	dcb.Parity = EVENPARITY;
 	dcb.StopBits = ONESTOPBIT;
 	dcb.ByteSize = 8;
 

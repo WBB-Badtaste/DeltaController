@@ -248,6 +248,10 @@ unsigned WINAPI CMotionStateMach::StateThread(void *pParam)
 			myStatus = pMSM->CtrlNozzle();
 			pMSM->m_status = READY;
 			break;
+		case CTRL_BELT:
+			myStatus = pMSM->CtrlBelt();
+			pMSM->m_status = READY;
+			break;
 		default:
 			pMSM->m_status = NOT_READY;
 			break;
@@ -287,13 +291,13 @@ const uint32_t CMotionStateMach::Catch()
 	DOOR_TRAJ_PARS doorPars1, doorPars2, doorPars3;
 
 	doorPars1.startPos.type = KIN_COORD;
-	doorPars1.startPos.position.x = -300;
-	doorPars1.startPos.position.y = 0 ;
+	doorPars1.startPos.position.x = 0;
+	doorPars1.startPos.position.y = 250 ;
 	doorPars1.startPos.position.z = -870;
 	doorPars1.endPos.type = KIN_COORD;
-	doorPars1.endPos.position.x = 50;
-	doorPars1.endPos.position.y = -400;
-	doorPars1.endPos.position.z = -873;
+	doorPars1.endPos.position.x = -400;
+	doorPars1.endPos.position.y = -140;
+	doorPars1.endPos.position.z = -870;
 	doorPars1.radius = 8;
 	doorPars1.riseHeight = max(doorPars1.startPos.position.z, doorPars1.endPos.position.z) + 25 * KIN_BASE_RATE - doorPars1.startPos.position.z;
 	doorPars1.trajPars.velocity = BELT_VEL * 9 * KIN_BASE_RATE;
@@ -326,7 +330,7 @@ const uint32_t CMotionStateMach::Catch()
 	doorPars3.riseHeight = 0;
 	doorPars3.trajPars.velocity = doorPars1.trajPars.velocity;
 	doorPars3.trajPars.acceleration = doorPars1.trajPars.velocity * 10;
-	doorPars3.trajPars.splineTime = 0.005;
+	doorPars3.trajPars.splineTime = doorPars1.trajPars.splineTime;
 
 	TRAJ_PARS readyPars, catchPars;
 	readyPars.velocity = 500 * KIN_BASE_RATE;
@@ -426,7 +430,7 @@ const uint32_t CMotionStateMach::Catch()
 
 		SAC_PTP_PARS ptpPos_belt;
 		ptpPos_belt.positionReference = SAC_RELATIVE;
-		ptpPos_belt.position = -550 * BELT_BASE_RATE;
+		ptpPos_belt.position = -500 * BELT_BASE_RATE;
 		ptpPos_belt.velocity = BELT_VEL * BELT_BASE_RATE;
 		ptpPos_belt.acceleration = ptpPos_belt.velocity * 10;
 		ptpPos_belt.jerk = ptpPos_belt.velocity * 100;
@@ -440,8 +444,8 @@ const uint32_t CMotionStateMach::Catch()
 		//读取皮带编码器值
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacReadVariable(beltId[0], SAC_VAR_AXIS_POS, &targetPos_kin.cuEncoderValue);
 
-		//匹配后的反应时间，可以不要
-		Sleep(500);
+// 		//匹配后的反应时间，可以不要
+// 		Sleep(500);
 
 		if (NyceSuccess(nyceStatus))
 		{
@@ -485,7 +489,7 @@ const uint32_t CMotionStateMach::Catch()
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksDoorDelta(doorPars2);
 
 		//二次计算抓取位置
-		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksCalcCatchPos(catchPars, doorPars2.endPos, targetPos_kin, -20 * KIN_BASE_RATE, catchPos);
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksCalcCatchPos(catchPars, doorPars2.endPos, targetPos_kin, -5 * KIN_BASE_RATE, catchPos);
 
 		//打开吸气阀
 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io1);//pick
@@ -820,6 +824,28 @@ const unsigned int CMotionStateMach::CtrlNozzle()
 	return nyceStatus;
 }
 
+const unsigned int CMotionStateMach::CtrlBelt()
+{
+	NYCE_STATUS nyceStatus(NYCE_OK);
+
+	SAC_STATE state;
+	SAC_SPG_STATE spgState;
+	SacReadState(beltId[0], &state, &spgState);
+
+	SAC_JOG_PARS jogPars;
+	jogPars.velocity = BELT_VEL * BELT_BASE_RATE;
+	jogPars.acceleration = jogPars.velocity * 10;
+	jogPars.jerk = jogPars.velocity * 100;
+
+	if (state == SAC_READY)
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacStartJog(beltId[0], &jogPars);
+	else
+		nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacStopJog(beltId[0], &jogPars);
+
+	return nyceStatus;
+}
+
+
 bool CMotionStateMach::FinlishMatch(const double &x, const double &y, const double &angle, const bool &bSuccess)
 {
 	if (bSuccess)
@@ -980,6 +1006,18 @@ bool CMotionStateMach::SwitchToCtrlNozzleState()
 	else
 	{
 		m_status = CTRL_NOZZLE;
+		SetEvent(m_hEvMove);
+		return true;
+	}
+}
+
+bool CMotionStateMach::SwitchToCtrlBeltState()
+{
+	if (m_status != READY)
+		return false;
+	else
+	{
+		m_status = CTRL_BELT;
 		SetEvent(m_hEvMove);
 		return true;
 	}

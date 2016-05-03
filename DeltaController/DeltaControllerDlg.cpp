@@ -236,12 +236,12 @@ BOOL CDeltaControllerDlg::OnInitDialog()
 	m_pMsm = new CMotionStateMach(this->m_hWnd);
 
 
-	//TEST
-	m_visionCW.LoadMod("C:\\mod.mod");
-
-	m_visionCW.FindModel();
-
-	m_visionCW.m_pImage;
+// 	//TEST
+// 	m_visionCW.LoadMod("C:\\mod.mod");
+// 
+// 	m_visionCW.FindModel();
+// 
+// 	m_visionCW.m_pImage;
 
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -338,7 +338,7 @@ void CDeltaControllerDlg::OnBnClickedPtp()//移动到指定点
 		return;
 	}
 
-	if (m_motion_par_x == 0 || m_motion_par_y == 0 || m_motion_par_z == 0)
+	if (m_motion_par_x == 0 && m_motion_par_y == 0 && m_motion_par_z == 0)
 	{
 		PrintStr("Please input a position.");
 		return;
@@ -505,21 +505,10 @@ void CDeltaControllerDlg::OnBnClickedPump()//控制真空泵
 void CDeltaControllerDlg::OnBnClickedSwitch()//控制电磁阀
 {
 	// TODO: Add your control notification handler code here
-// 	NYCE_STATUS nyceStatus(NYCE_OK);
-// 
-// 	NYCE_DIGITAL_IO_ID io;
-// 	io.slotId = NYCE_SLOT3;
-// 	io.digIONr = NYCE_DIGOUT2;
-// 
-// 	uint32_t ioStatus(0);
-// 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiReadDigitalIO(noId[0], io, &ioStatus);
-// 
-// 	if (ioStatus)
-// 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiClearDigitalOutput(noId[0], io);
-// 	else
-// 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : NhiSetDigitalOutput(noId[0], io);
-// 
-// 	StatusHandle(nyceStatus);
+	if(!m_pMsm->SwitchToCtrlNozzleState())
+	{
+		PrintStr("Robot is not ready.");
+	}
 }
 
 
@@ -554,23 +543,10 @@ void CDeltaControllerDlg::OnBnClickedCatch()
 void CDeltaControllerDlg::OnBnClickedBelt()//传送带控制
 {
 	// TODO: Add your control notification handler code here
-// 	NYCE_STATUS nyceStatus(NYCE_OK);
-// 
-// 	SAC_STATE state;
-// 	SAC_SPG_STATE spgState;
-// 	SacReadState(beltId[0], &state, &spgState);
-// 
-// 	SAC_JOG_PARS jogPars;
-// 	jogPars.velocity = BELT_VEL * BELT_BASE_RATE;
-// 	jogPars.acceleration = jogPars.velocity * 10;
-// 	jogPars.jerk = jogPars.velocity * 100;
-// 
-// 	if (state == SAC_READY)
-// 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacStartJog(beltId[0], &jogPars);
-// 	else
-// 		nyceStatus = NyceError(nyceStatus) ? nyceStatus : SacStopJog(beltId[0], &jogPars);
-// 
-// 	StatusHandle(nyceStatus);
+	if(!m_pMsm->SwitchToCtrlBeltState())
+	{
+		PrintStr("Robot is not ready.");
+	}
 }
 
 

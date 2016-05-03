@@ -15,6 +15,7 @@ static double rate_angle2pu[ROCKS_MECH_MAX_NR_OF_JOINTS];
 
 static HANDLE evExportDatas(CreateEvent(NULL,TRUE,FALSE,NULL));
 
+//设置Delta机构参数函数
 static NYCE_STATUS RocksSetMechParsDelta(const double &lenOfBasePlatform, const double &lenOfTravelPlatform, const double &lenOfActiveArm, const double &lenOfPassiveArm)
 {
 	delta_mech_pars.e = lenOfTravelPlatform;
@@ -25,6 +26,7 @@ static NYCE_STATUS RocksSetMechParsDelta(const double &lenOfBasePlatform, const 
 	return NYCE_OK;
 }
 
+//设置坐标转换比例函数
 static NYCE_STATUS RocksSetPuRateDelta(const double &rate_robot, const double &rate_belt)
 {
 	rate_angle2pu[0] = rate_robot;
@@ -58,7 +60,7 @@ inline void ConvertPUToAngle(const double &positionUnit, double &angle, const ui
 		angle = 0.0;
 }
 
-//Delta的正向坐标转换
+//Delta的正向坐标转换函数
 //pJointPos是PU值
 static NYCE_STATUS RocksKinForwardDelta(ROCKS_MECH* pMech, const double pJointPos[], double pMechPos[])
 {
@@ -85,6 +87,7 @@ static NYCE_STATUS RocksKinForwardDelta(ROCKS_MECH* pMech, const double pJointPo
 	return NYCE_OK;
 }
 
+//获取Delta的机构位置
 static NYCE_STATUS RocksKinDeltaPosition(ROCKS_MECH* pMech, double pPos[])
 {
 	ZeroMemory(pPos, ROCKS_MECH_MAX_DOF * sizeof(double));
@@ -98,6 +101,7 @@ static NYCE_STATUS RocksKinDeltaPosition(ROCKS_MECH* pMech, double pPos[])
 	return status;
 }
 
+//Delta的逆向坐标转换函数
 static NYCE_STATUS RocksKinInverseDelta(ROCKS_MECH* pMech, const ROCKS_KIN_INV_PARS* pKin)
 {
 	if (pMech->var.mechStep != ROCKS_MECH_STEP_VALID_PATH)
@@ -214,6 +218,8 @@ static NYCE_STATUS RocksKinInverseDelta(ROCKS_MECH* pMech, const ROCKS_KIN_INV_P
 	return NYCE_OK;
 }
 
+//输出spline数据功能的控制函数
+//调试使用
 static NYCE_STATUS RocksExExportSplineDatas(const BOOL &signal)
 {
 	if (signal && WaitForSingleObject(evExportDatas, 0) != WAIT_OBJECT_0)

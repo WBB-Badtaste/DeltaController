@@ -1,7 +1,7 @@
 #pragma once
 
  
-#define DEFAULT_COMM_NAME _T("COM1")
+#define DEFAULT_COMM_NAME _T("COM2")
 #define DEFAULT_COMM_RATE CBR_19200
 
 // 读取总超时 = ReadTotalTimeoutMultiplier * 字节数 + ReadTotalTimeoutConstant  
