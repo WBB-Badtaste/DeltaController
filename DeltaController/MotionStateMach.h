@@ -57,10 +57,12 @@ private:
 
 	//工作线程
 	HANDLE m_hStateThread, m_hEvST, m_hEvMove;
-	HANDLE m_hReadPosThread, m_hEvRPT;
+	HANDLE m_hReadParsThread, m_hEvRPT;
+	HANDLE m_hReadModbusThread, m_hEvRMT;
 	MOTION_STATE m_status;
 	static unsigned WINAPI StateThread(void *);
-	static unsigned WINAPI AssistThread(void *);
+	static unsigned WINAPI ReadParsThread(void *);
+	static unsigned WINAPI ReadModbusThread(void *);
 
 	//工作函数
 	const uint32_t Catch();
@@ -73,8 +75,6 @@ private:
 	const uint32_t CtrlCarmera();
 	const uint32_t CtrlNozzle();
 	const uint32_t CtrlBelt();
-
-
 
 	//ROCKS状态处理函数
 	void StatusHandler(uint32_t &);

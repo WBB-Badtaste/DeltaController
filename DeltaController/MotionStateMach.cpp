@@ -12,8 +12,10 @@
 CMotionStateMach::CMotionStateMach(HWND hMainWnd)
 	: m_hMainWnd(hMainWnd)
 	, m_hStateThread(0)
-	, m_hReadPosThread(0)
+	, m_hReadParsThread(0)
+	, m_hReadModbusThread(0)
 	, m_hEvST(0)
+	, m_hEvRMT(0)
 	, m_hEvRPT(0)
 	, m_status(READY)
 	, m_hEvMove(0)
@@ -38,9 +40,13 @@ CMotionStateMach::CMotionStateMach(HWND hMainWnd)
 	m_hEvMove = CreateEvent(NULL, TRUE, FALSE, NULL);
 	m_hStateThread = (HANDLE)_beginthreadex(NULL, 0, StateThread, this, 0, NULL );
 
-	//启动读位置线程
+	//启动读机器人参数线程
 	m_hEvRPT = CreateEvent(NULL, TRUE, TRUE, NULL);
-	m_hReadPosThread = (HANDLE)_beginthreadex(NULL, 0, AssistThread, this, 0, NULL );
+	m_hReadParsThread = (HANDLE)_beginthreadex(NULL, 0, ReadParsThread, this, 0, NULL );
+
+	//启动读Modbus线程
+	m_hEvRMT = CreateEvent(NULL, TRUE, TRUE, NULL);
+	m_hReadParsThread = (HANDLE)_beginthreadex(NULL, 0, ReadModbusThread, this, 0, NULL );
 }
 
 
@@ -50,11 +56,15 @@ CMotionStateMach::~CMotionStateMach(void)
 	m_bInit = false;
 	//关闭读位置线程
 	ResetEvent(m_hEvRPT);
-	WaitForSingleObject(m_hReadPosThread, 500);
+	WaitForSingleObject(m_hReadParsThread, INFINITE);
+	//关闭读Modbus线程
+	ResetEvent(m_hEvRMT);
+	WaitForSingleObject(m_hReadModbusThread, INFINITE);
 	//关闭状态机线程
 	ResetEvent(m_hEvST);
 	SetEvent(m_hEvMove);
-	WaitForSingleObject(m_hStateThread, 500);
+	WaitForSingleObject(m_hStateThread, INFINITE);
+	
 
 	NYCE_STATUS nyceStatus(NYCE_OK);
 
@@ -74,7 +84,7 @@ CMotionStateMach::~CMotionStateMach(void)
 }
 
 
-unsigned WINAPI CMotionStateMach::AssistThread(void *pParam)
+unsigned WINAPI CMotionStateMach::ReadParsThread(void *pParam)
 {
 	CMotionStateMach *pMSM = (CMotionStateMach *)pParam;
 
@@ -167,10 +177,16 @@ unsigned WINAPI CMotionStateMach::AssistThread(void *pParam)
 
 		pMSM->m_mc.WriteReg(1, 18, regDatas);
 
-		
+	}
+	return 0;
+}
 
-		
+unsigned WINAPI CMotionStateMach::ReadModbusThread(void *pParam)
+{
+	CMotionStateMach *pMSM = (CMotionStateMach *)pParam;
 
+	while(WaitForSingleObject(pMSM->m_hEvRMT, 0) == WAIT_OBJECT_0)
+	{
 		//读取modbus指令
 		float ptp_x(0.0), ptp_y(0.0), ptp_z(0.0), ptp_vel(0.0);
 		if(pMSM->m_mc.GetPtpComand(ptp_x, ptp_y, ptp_z, ptp_vel))
@@ -186,7 +202,6 @@ unsigned WINAPI CMotionStateMach::AssistThread(void *pParam)
 	}
 	return 0;
 }
-
 
 unsigned WINAPI CMotionStateMach::StateThread(void *pParam)
 {
