@@ -46,7 +46,7 @@ CMotionStateMach::CMotionStateMach(HWND hMainWnd)
 
 	//启动读Modbus线程
 	m_hEvRMT = CreateEvent(NULL, TRUE, TRUE, NULL);
-	m_hReadParsThread = (HANDLE)_beginthreadex(NULL, 0, ReadModbusThread, this, 0, NULL );
+	m_hReadModbusThread = (HANDLE)_beginthreadex(NULL, 0, ReadModbusThread, this, 0, NULL );
 }
 
 
@@ -54,16 +54,43 @@ CMotionStateMach::CMotionStateMach(HWND hMainWnd)
 CMotionStateMach::~CMotionStateMach(void)
 {
 	m_bInit = false;
+	DWORD exitCode(0);
 	//关闭读位置线程
 	ResetEvent(m_hEvRPT);
-	WaitForSingleObject(m_hReadParsThread, INFINITE);
+	if(GetExitCodeThread(m_hReadParsThread, &exitCode))
+	{
+		if (exitCode == STILL_ACTIVE)
+			WaitForSingleObject(m_hReadParsThread, INFINITE);
+	}
+	else
+	{
+		//异常
+	}
+		
 	//关闭读Modbus线程
 	ResetEvent(m_hEvRMT);
-	WaitForSingleObject(m_hReadModbusThread, INFINITE);
+	if(GetExitCodeThread(m_hReadModbusThread, &exitCode))
+	{
+		if (exitCode == STILL_ACTIVE)
+			WaitForSingleObject(m_hReadModbusThread, INFINITE);
+	}
+	else
+	{
+		//异常
+	}
+
 	//关闭状态机线程
 	ResetEvent(m_hEvST);
 	SetEvent(m_hEvMove);
-	WaitForSingleObject(m_hStateThread, INFINITE);
+	if(GetExitCodeThread(m_hStateThread, &exitCode))
+	{
+		if (exitCode == STILL_ACTIVE)
+			WaitForSingleObject(m_hStateThread, INFINITE);
+	}
+	else
+	{
+		//异常
+	}
 	
 
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -128,12 +155,14 @@ unsigned WINAPI CMotionStateMach::ReadParsThread(void *pParam)
 			myStatus = NyceError(myStatus) ? myStatus : SacReadVariable(axId[ax], SAC_VAR_SETPOINT_VEL, &dJointVel[ax]);
 		}
 
+
 		//读取有问题，添加异常处理
 		if (NyceError(myStatus))
 		{
 			Sleep(100);
 			continue;
 		}
+
 
 		//UI上显示机器人位置
 		::SendMessage(pMSM->m_hMainWnd, WM_UPDATE_ROBOT_POS, NULL, (LPARAM)dRobotPos);
