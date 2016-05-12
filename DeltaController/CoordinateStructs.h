@@ -16,16 +16,16 @@ typedef enum CoordType
 //坐标系结构体
 typedef struct RocksCoordinate
 {
-	ROCKS_E3_VECTOR position;
-	COORD_TYPE type;
-	double cuEncoderValue;
+	ROCKS_E3_VECTOR position;//实际位置
+	COORD_TYPE type;//坐标系类型
+	double cuEncoderValue;//编码器值，用在抓取时匹配编码器位置
 }ROCKS_COORD;
 
 //转换矩阵结构体
 typedef struct TransfMatrix
 {
-	ROCKS_E3_VECTOR t;
-	ROCKS_E3_VECTOR r;
-	double zoom;
+	ROCKS_E3_VECTOR t;//平移矩阵
+	ROCKS_E3_VECTOR r;//旋转矩阵
+	double zoom;//缩放比例
 //	ROCKS_E3_VECTOR c;
 }TRANSF_MATRIX;

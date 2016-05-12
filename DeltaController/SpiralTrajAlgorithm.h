@@ -1,6 +1,9 @@
 #pragma once
 
 #include <math.h>
+//该文件是阿基米德螺旋数学模型
+
+
 
 static void CalcArchimedeSpiralPars(const double *const startPos, const double *const endPos, const double *const center, double *const radius, double &a, double &b)
 {

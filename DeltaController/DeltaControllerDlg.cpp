@@ -878,6 +878,7 @@ void CDeltaControllerDlg::PrintStr(const CString &str)
 	string += str;
 	string += "\n";
 	m_listBox.AddString(string);
+	m_listBox.SetCurSel(m_listBox.GetCount() - 1);
 }
 
 void CDeltaControllerDlg::OnBnClickedButtonBrake()

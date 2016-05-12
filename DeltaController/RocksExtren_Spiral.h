@@ -20,6 +20,7 @@ typedef struct rocks_traj_segment_spiral_pars
     ROCKS_POSE  originOffset;                   /**< Reference frame rotation offsets to be added before the arc */
 } ROCKS_TRAJ_SEGMENT_SPIRAL_PARS;
 
+//没有使用
 typedef struct rocks_traj_segment_spiral_pars_ex
 {
 	double      endPos[2];                      /**< End position in 2 world coordinates (XY XZ or YZ) */
@@ -32,6 +33,8 @@ typedef struct rocks_traj_segment_spiral_pars_ex
 	ROCKS_POSE  originOffset;                   /**< Reference frame rotation offsets to be added before the arc */
 } ROCKS_TRAJ_SEGMENT_SPIRAL_PARS_EX;
 
+
+//混合轨迹中，生成螺旋轨迹的函数
 static NYCE_STATUS RocksTrajSegmentSpiral(ROCKS_MECH *pMech, const ROCKS_TRAJ_SEGMENT_SPIRAL_PARS *pTraj)
 {
 	double startPos[2];
@@ -139,6 +142,7 @@ static NYCE_STATUS RocksTrajSegmentSpiral(ROCKS_MECH *pMech, const ROCKS_TRAJ_SE
 	return NYCE_OK;
 }
 
+//非混合轨迹中，生成螺旋轨迹的函数
 static NYCE_STATUS RocksTrajSegmentSpiral(ROCKS_MECH *pMech, const ROCKS_TRAJ_SEGMENT_SPIRAL_PARS_EX *pTraj)
 {
 	double startPos[2];
@@ -198,10 +202,10 @@ static NYCE_STATUS RocksTrajSegmentSpiral(ROCKS_MECH *pMech, const ROCKS_TRAJ_SE
 	if (totalAngle < -M_PI)
 		totalAngle = -M_PI * 2.0 - totalAngle;
 
-	//不通用的定义，修改
+	//待优化
 	const double startAngleVel(totalAngle >= 0 ? pMech->var.lastSegmentEndVel/ startRadius : -pMech->var.lastSegmentEndVel/ startRadius);
 	double endAngleVel(totalAngle >= 0 ? pTraj->endAngleVelocity : -pTraj->endAngleVelocity);
-	//不通用的定义，修改
+	//待优化
 
 
 	//估算时间

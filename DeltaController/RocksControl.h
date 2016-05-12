@@ -17,6 +17,7 @@
 
 static ROCKS_MECH  m_mech;
 
+//笛卡尔坐标
 typedef struct cartesianCoordinate
 {
 	double x;
@@ -24,6 +25,7 @@ typedef struct cartesianCoordinate
 	double z;
 }CARTESIAN_COORD;
 
+//运动参数
 typedef struct trajectoryPars
 {
 	double velocity;
@@ -32,16 +34,7 @@ typedef struct trajectoryPars
 }TRAJ_PARS;
 
 
-/**
-*
-*	@brief 
-*
-*	@author JoMar[sos901012@gmail.com]
-*
-*	@date 2016-01-22
-*
-*
-*/
+//初始化Delta机器人
 static NYCE_STATUS RocksInitDelta(const uint32_t &axesNum, const SAC_AXIS* const axId)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -61,6 +54,7 @@ static NYCE_STATUS RocksInitDelta(const uint32_t &axesNum, const SAC_AXIS* const
 	}
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksMechCreate( &m_mech );
 
+//山洋机器人本体
 // 	double e = 40;     
 // 	double f = 105;    
 // 	double re = 194;
@@ -72,22 +66,26 @@ static NYCE_STATUS RocksInitDelta(const uint32_t &axesNum, const SAC_AXIS* const
 // 	double re = 650;
 // 	double rf = 330;
 
+	//中南林大本体（大族）
 	double e = 70;  
 	double f = 220; 
 	double re = 1000;
 	double rf = 400;
 
+	//设置本体参数到机器人框架
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetMechParsDelta(f, e, rf, re);
 
 /*	double rate_angle2pu = 131072 * 11 / (2 * M_PI);//山洋机器人*/
 /*	double rate_angle2pu_robot = 131072 * 40 / (2 * M_PI);//相聚机器人*/
 	double rate_angle2pu_robot = 131072 * 33 / (2 * M_PI);//大族机器人
 	double rate_angle2pu_belta = 131072 * 5 / (2 * M_PI);
+	//设置PU比例，皮带机编码器与实际长度比例
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksSetPuRateDelta(rate_angle2pu_robot, rate_angle2pu_belta);
 
 	return nyceStatus;
 }
 
+//初始化笛卡尔机器人
 static NYCE_STATUS RocksInitCartesian(const uint32_t &axesNum, const SAC_AXIS* const axId)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -110,6 +108,7 @@ static NYCE_STATUS RocksInitCartesian(const uint32_t &axesNum, const SAC_AXIS* c
 	return nyceStatus;
 }
 
+//清理机器人框架中的缓存数据，初始化后必须调用
 static NYCE_STATUS RocksTerm()
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -139,6 +138,7 @@ static NYCE_STATUS RocksTerm()
 	return nyceStatus;
 }
 
+//Delta机器人的PTP函数，注意使用ROCKS_COORD时的坐标转换
 static NYCE_STATUS RocksPtpDelta(const ROCKS_COORD &rocksCoord, const TRAJ_PARS &trajPars, BOOL bRelative = FALSE, const double timeout = SAC_INDEFINITE)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -146,11 +146,15 @@ static NYCE_STATUS RocksPtpDelta(const ROCKS_COORD &rocksCoord, const TRAJ_PARS 
 	ROCKS_TRAJ_SINE_ACC_PTP_PARS sinePtpPars;
 	ROCKS_KIN_INV_PARS kinPars;
 
+	//输入的坐标要转换成机构坐标
 	ROCKS_COORD kinCoord;
 	kinCoord.type = KIN_COORD;
 	ConvertTwoCoordinate(rocksCoord, kinCoord);
 
+	//获取Delta机器人机构坐标系下的工件坐标，并设置PTP起始点
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinDeltaPosition(&m_mech, sinePtpPars.startPos);
+
+	//设置PTP终点
 	if (bRelative)
 	{
 		sinePtpPars.endPos[0] = sinePtpPars.startPos[0] + kinCoord.position.x;
@@ -164,6 +168,7 @@ static NYCE_STATUS RocksPtpDelta(const ROCKS_COORD &rocksCoord, const TRAJ_PARS 
 		sinePtpPars.endPos[2] = kinCoord.position.z;
 	}
 	
+	//设置其他轨迹参数
 	sinePtpPars.maxVelocity = trajPars.velocity;
 	sinePtpPars.maxAcceleration = trajPars.acceleration;
 	sinePtpPars.splineTime = trajPars.splineTime;
@@ -171,6 +176,7 @@ static NYCE_STATUS RocksPtpDelta(const ROCKS_COORD &rocksCoord, const TRAJ_PARS 
 	sinePtpPars.pPositionSplineBuffer = NULL;
 	sinePtpPars.pVelocitySplineBuffer = NULL;
 
+	//调用轨迹算法，生成轨迹
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSineAccPtp(&m_mech,&sinePtpPars);
 
 	for (int ax = 0; ax < 3; ++ax)
@@ -178,19 +184,25 @@ static NYCE_STATUS RocksPtpDelta(const ROCKS_COORD &rocksCoord, const TRAJ_PARS 
 		kinPars.pJointPositionBuffer[ ax ] = NULL;
 		kinPars.pJointVelocityBuffer[ ax ] = NULL;
 	}
+
+	//调用运动学函数，生成PVT数据
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinInverseDelta( &m_mech, &kinPars );
 
+	//开始运动
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStream( &m_mech );	
 
-	// Synchronize on motion complete
-	// ------------------------------
+	//同步
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStreamSynchronize( &m_mech, timeout);
 
 	return nyceStatus;
 }
 
-
-//centerOffset是圆形轨迹中心相对起始位置的偏移量
+//delta的圆弧轨迹运动函数，注意坐标转换
+//centerOffset[in]	-圆形轨迹中心相对起始位置的偏移量
+//angle[in]			-圆弧转角
+//trajPars[in]		-运动参数
+//timeout[in]		-同步时间，默认无限等待
+//repeatTimes[in]	-重复次数，默认不重复
 static NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const double &angle, const TRAJ_PARS &trajPars, const double &timeout = SAC_INDEFINITE, const int &repeatTimes = -1)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -198,11 +210,14 @@ static NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const d
 	ROCKS_TRAJ_SINE_ACC_CIRCLE_PARS sineAccCirclePars;
 	ROCKS_KIN_INV_PARS kinPars;
 	ROCKS_TRAJ_PATH rocksTrajPath;
-
+	
+	//计算半径
 	const double radius(sqrt(centerOffset.x * centerOffset.x + centerOffset.y * centerOffset.y + centerOffset.z * centerOffset.z));
 
+	//获取机器人在机构坐标系的位置，并设置圆弧起始点
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinDeltaPosition(&m_mech, 	sineAccCirclePars.startPos);
 
+	//设置其他轨迹参数
 	sineAccCirclePars.maxVelocity = trajPars.velocity;
 	sineAccCirclePars.maxAcceleration = trajPars.acceleration;
 	sineAccCirclePars.splineTime = trajPars.splineTime;
@@ -214,9 +229,11 @@ static NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const d
 	sineAccCirclePars.pPositionSplineBuffer = NULL;
 	sineAccCirclePars.pVelocitySplineBuffer = NULL;
 
+	//调用轨迹算法，生成轨迹
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajSineAccCircle( &m_mech, &sineAccCirclePars);
 	
 	ROCKS_POSE pose;
+	//计算圆弧轨迹在空间内的偏角，保存到旋转矩阵中
 	CalcRotateAngle(pose.r.y, -centerOffset.x, -centerOffset.z);
 	pose.r.x = 0;
 	pose.r.y = pose.r.y;
@@ -225,27 +242,31 @@ static NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const d
 	pose.t.y = 0;
 	pose.t.z = 0;
 
+	//将轨迹旋转到正确位置，旋转中心是圆心，顺时针转动
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinMoveOrigin( &m_mech, &pose );
 
 	switch(repeatTimes)
 	{
-	case -1:
+	case -1://只运行一次
 		for (int ax = 0; ax < ROCKS_MECH_MAX_NR_OF_JOINTS; ++ax)
 		{
 			kinPars.pJointPositionBuffer[ ax ] = NULL;
 			kinPars.pJointVelocityBuffer[ ax ] = NULL;
 		}
+		//运动学转换
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinInverseDelta( &m_mech, &kinPars );
-
+		//开始运行
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStream( &m_mech );	
-
+		//同步
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStreamSynchronize( &m_mech, timeout );
 		break;
-	case 0:
+	case 0://无限循环
+		//缓存轨迹数据，减少计算量
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajGetPath( &m_mech, &rocksTrajPath );
 
 		while(nyceStatus == NYCE_OK)
 		{
+			//加载轨迹数据
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajLoadPath(&m_mech, &rocksTrajPath);
 
 			for (int ax = 0; ax < ROCKS_MECH_MAX_NR_OF_JOINTS; ++ax)
@@ -253,21 +274,23 @@ static NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const d
 				kinPars.pJointPositionBuffer[ ax ] = NULL;
 				kinPars.pJointVelocityBuffer[ ax ] = NULL;
 			}
-
+			//运动学转换
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinInverseDelta( &m_mech, &kinPars );
-
+			//运动
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStream( &m_mech );
-
+			//同步
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStreamSynchronize( &m_mech, timeout );
 		}
 
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajDeletePath( &m_mech, &rocksTrajPath );
 		break;
-	default:
+	default://有限循环
+		//缓存轨迹数据，减少计算量
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajGetPath( &m_mech, &rocksTrajPath );
 
 		for(int i = 0; i < repeatTimes && nyceStatus == NYCE_OK; ++i)
 		{
+			//加载轨迹数据
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajLoadPath(&m_mech, &rocksTrajPath);
 
 			for (int ax = 0; ax < ROCKS_MECH_MAX_NR_OF_JOINTS; ++ax)
@@ -275,22 +298,29 @@ static NYCE_STATUS RocksCricleDelta(const CARTESIAN_COORD &centerOffset, const d
 				kinPars.pJointPositionBuffer[ ax ] = NULL;
 				kinPars.pJointVelocityBuffer[ ax ] = NULL;
 			}
-
+			//运动学转换
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinInverseDelta( &m_mech, &kinPars );
-
+			//运动
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStream( &m_mech );	
-
+			//同步
 			nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStreamSynchronize( &m_mech, timeout );
 		}
 
 		nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksTrajDeletePath( &m_mech, &rocksTrajPath );
 		break;
 	}
-	
+	//使用旋转矩阵后，要重置坐标系
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinResetOrigin(&m_mech);
 
 	return nyceStatus;
 }
+
+//笛卡尔机构的圆弧运动
+//centerOffset[in]	-圆形轨迹中心相对起始位置的偏移量
+//angle[in]			-圆弧转角
+//trajPars[in]		-运动参数
+//timeout[in]		-同步时间，默认无限等待
+//repeatTimes[in]	-重复次数，默认不重复
 static NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, const double &angle, const TRAJ_PARS &trajPars, const double &timeout = SAC_INDEFINITE, const int &repeatTimes = -1)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -394,17 +424,12 @@ static NYCE_STATUS RocksCricleCartesian(const CARTESIAN_COORD &centerOffset, con
 	return nyceStatus;	
 }
 
-//const double DOOR_SPLINETIME = 0.0005;
+
 const double DOOR_SPEED = 500;
 const double DOOR_ACC = DOOR_SPEED * 100;
 const double DOOR_HEIGHT = 20;
 const double DOOR_WIDTH = 20;
 const double DOOR_FILLET = 40;
-
-// const double OPT_DOOR_POINT_1[3] = {-65,0,-220};
-// const double OPT_DOOR_POINT_2[3] = {-25,0,-170};
-// const double OPT_DOOR_POINT_3[3] = { 25,0,-170};
-// const double OPT_DOOR_POINT_4[3] = { 65,0,-220};
 
 static const double OPT_DOOR_POINT_1[3] = {-65,0,-320};
 static const double OPT_DOOR_POINT_2[3] = {-25,0,-270};
@@ -415,6 +440,7 @@ static ROCKS_TRAJ_SEGMENT_START_PARS segStartPars;
 static ROCKS_TRAJ_SEGMENT_LINE_PARS segLinePars1,segLinePars2,segLinePars3,segLinePars4;
 static ROCKS_TRAJ_SEGMENT_ARC_PARS segArcPars1,segArcPars2;
 
+//delta的门型运动
 static NYCE_STATUS RocksDoorDelta()
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -514,6 +540,7 @@ static const double SPIRAL_MAX_RADIAL_ACC = SPIRAL_MAX_RADIAL_SPEED * 100;
 static ROCKS_TRAJ_SEGMENT_SPIRAL_PARS_EX segSpiralPars1, segSpiralPars2, segSpiralPars3, segSpiralPars4;
 
 //拓展算法，慎用
+//使用拓展的螺旋线轨迹算法，通过仿真和电机空载测试，不要直接使用到机器人上
 static NYCE_STATUS RocksSpiralExDoorDelta()
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -658,25 +685,24 @@ static NYCE_STATUS RocksSpiralExDoorDelta()
 	return nyceStatus;
 }
 
-
+//门型轨迹描述结构体
 typedef struct doorTrajPars
 {
-	ROCKS_COORD startPos;
-	ROCKS_COORD endPos;
-	double riseHeight;
-	double radius;
-	TRAJ_PARS trajPars;
+	ROCKS_COORD startPos;//起始点
+	ROCKS_COORD endPos;//终止点
+	double riseHeight;//台升高度，以起始点和终止点Z轴最大值为基准
+	double radius;//过渡圆弧半径
+	TRAJ_PARS trajPars;//
 }DOOR_TRAJ_PARS;
 
 /**
 *	@author JoMar
 *	@date 2016-01-22
-*	@brief Control Delta-Robot to complete the door type path movement.
+*	@brief Control Delta-Robot to complete the door type path movement.标准的门型运动函数
 *	@param [in] doorPars - The informations of the door type path.
 *	@param [in] timeout - The time limitation of waiting Delta-Robot to complete the path.
 *	@return NYCE_STATUS
 */
-
 static NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &timeout = SAC_INDEFINITE)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -772,6 +798,7 @@ static NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &
 		kinPars.pJointPositionBuffer[ ax ] = NULL;
 		kinPars.pJointVelocityBuffer[ ax ] = NULL;
 	}
+
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksKinInverseDelta( &m_mech, &kinPars );
 
 	nyceStatus = NyceError( nyceStatus ) ? nyceStatus : RocksStream( &m_mech );
@@ -783,6 +810,7 @@ static NYCE_STATUS RocksDoorDelta(const DOOR_TRAJ_PARS &doorPars, const double &
 	return nyceStatus;
 }
 
+//设置零点
 static NYCE_STATUS RocksSetHomePos(const ROCKS_COORD &rocksCoord)
 {
 	g_bInitHomePos = TRUE;
@@ -792,14 +820,7 @@ static NYCE_STATUS RocksSetHomePos(const ROCKS_COORD &rocksCoord)
 	return NYCE_OK;
 }
 
-static NYCE_STATUS RocksSetPlacePos(const ROCKS_COORD &rocksCoord)
-{
-	g_homePos.type = KIN_COORD;
-	ConvertTwoCoordinate(rocksCoord, g_placePos);
-
-	return NYCE_OK;
-}
-
+//delta回零，实质就是PTP
 static NYCE_STATUS RocksHomeDelta(const TRAJ_PARS &trajPars)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -828,6 +849,7 @@ static NYCE_STATUS RocksHomeDelta(const TRAJ_PARS &trajPars)
 	ZeroMemory(curCarPos, ROCKS_MECH_MAX_DOF * sizeof(double));
 	nyceStatus = NyceError(nyceStatus) ? nyceStatus : RocksKinDeltaPosition(&m_mech, curCarPos);
 
+	//比较当前位置与零点的偏移，没超过阈值不运动
 	if (curCarPos[0] - g_homePos.position.x >  1 ||
 		curCarPos[1] - g_homePos.position.y >  1 ||
 		curCarPos[2] - g_homePos.position.z >  1 ||
@@ -841,6 +863,7 @@ static NYCE_STATUS RocksHomeDelta(const TRAJ_PARS &trajPars)
 	return nyceStatus;
 }
 
+//读取Delta机器人位置
 static NYCE_STATUS RocksReadPosDelta(double *position)
 {
 	NYCE_STATUS nyceStatus(NYCE_OK);
@@ -850,6 +873,7 @@ static NYCE_STATUS RocksReadPosDelta(double *position)
 	return nyceStatus;
 }
 
+//初始化转换矩阵
 static NYCE_STATUS RocksInitMatrix()
 {
 	g_pTransfMatrix = new TRANSF_MATRIX[NUM_COORD_TYPES]();
@@ -908,6 +932,7 @@ static NYCE_STATUS RocksInitMatrix()
 	return NYCE_OK;
 }
 
+//初始化转换矩阵后，释放内存
 static NYCE_STATUS RocksTermMatrix()
 {
 
@@ -1005,38 +1030,6 @@ static NYCE_STATUS RocksCalcCatchPos(const TRAJ_PARS &motionPars, const ROCKS_CO
 	//这里添加判断是否在抓取区
 
 	return nyceStatus;
-}
-
-
-//暂时使用
-static NYCE_STATUS RocksSetTargetPos()
-{
-
-// 	for (uint32_t i = 0; i < NUM_TARGETS; ++i)
-// 	{
-// 		g_targetPos[i].type = BELT_COORD;
-// 		g_targetPos[i].position.x = ;
-// 		g_targetPos[i].position.y = ;
-// 		g_targetPos[i].position.z = 0;
-// 		g_targetPos[i].cuEncoderValue = 
-// 	}
-
-	return NYCE_OK;
-}
-
-static NYCE_STATUS RocksGetTargetPos(ROCKS_COORD &targetPos)
-{
-	NYCE_STATUS nyceSatus(NYCE_OK);
-
-	double beltPos;
-	nyceSatus = NyceError(nyceSatus) ? nyceSatus : SacReadVariable(beltId[0], SAC_VAR_AXIS_POS, &beltPos);
-
-// 	//不能计算重复长度，很不精确
-// 	int fac = beltPos;
-// 	beltPos -= fac
-// 	//过滤掉反面
-
-	return nyceSatus;
 }
 
 /**

@@ -7,6 +7,7 @@ static double (*pVelSpiralSplineBuffer)[ROCKS_MECH_MAX_DOF];
 static uint32_t spiralBufferSize = 0;
 static BOOL bSpiralBufferAlloced = FALSE;
 
+//专门用于自定义螺旋轨迹的缓冲区数据管理
 static void SpiralBufferManage(ROCKS_MECH *pMech, const uint32_t& nextBufferStartIndex)
 {
 	if (pMech->var.usedNrOfSplines == 0)//新的path

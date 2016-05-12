@@ -13,41 +13,6 @@ bool crc_check(unsigned char *pBuffer,unsigned len)
 }
 
 
-// unsigned short crc_16(const char *Array, char *Rcvbuf,unsigned int Len)
-// {
-// 	unsigned int  IX, IY, CRC;
-// 	CRC = 0xFFFF;//set all 1
-// 
-// 	if (Len <= 0)
-// 		CRC = 0;
-// 	else
-// 	{
-// 		Len--; 
-// 		for (IX = 0; IX <= Len; IX++)
-// 		{
-// 			CRC = CRC ^ (unsigned int)(Array[IX]);
-// 			for(IY = 0; IY <= 7; IY++)
-// 			{
-// 				if ((CRC & 1) != 0 )
-// 				{
-// 					CRC = (CRC >> 1) ^ 0xA001;
-// 				}
-// 	
-// 					CRC = CRC >> 1;
-// 			}
-// 		}
-// 	}
-// 
-// 	Rcvbuf[1] = (CRC & 0xff00) >> 8;//∏ﬂŒª÷√
-// 	Rcvbuf[0] = (CRC & 0x00ff);     //µÕŒª÷√
-// 
-// // 	CRC  = Rcvbuf[0];
-// // 	CRC += Rcvbuf[1] << 8;
-// 	
-// 
-// 	return CRC;
-// }
-
 unsigned short crc_16(unsigned char *Array, unsigned char *Rcvbuf,unsigned int Len)
 {
 	unsigned int  IX,IY,CRC;

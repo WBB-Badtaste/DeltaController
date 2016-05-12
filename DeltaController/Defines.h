@@ -48,10 +48,10 @@ static TRANSF_MATRIX *g_pTransfMatrix;
 #define PIXEL_BASE_RATE 3.1266775702479
 
 //特殊坐标 
-static BOOL		g_bInitHomePos;
-static ROCKS_COORD g_homePos;
-static ROCKS_COORD g_placePos;
-static ROCKS_COORD g_pickPos;
+static BOOL			g_bInitHomePos;
+static ROCKS_COORD	g_homePos;
+static ROCKS_COORD	g_placePos;
+static ROCKS_COORD	g_pickPos;
 
 //门型运动参数
 #define DOOR_HIGHT1 -835
@@ -59,7 +59,8 @@ static ROCKS_COORD g_pickPos;
 #define DOOR_PAR_X 152.5
 #define DOOR_PAR_Y 0
 
-#define ASSIST_DELAY 500//协助线程的时间间隔
+//协助线程的时间间隔
+#define ASSIST_DELAY 500
 
 //回零运动参数
 #define HOME_VEL 50

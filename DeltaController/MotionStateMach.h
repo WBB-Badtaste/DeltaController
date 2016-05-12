@@ -45,7 +45,6 @@ public:
 	bool SwitchToCtrlCarmeraState();
 	bool SwitchToCtrlNozzleState();
 	bool SwitchToCtrlBeltState();
-	
 
 private:
 	//匹配结果
@@ -65,16 +64,16 @@ private:
 	static unsigned WINAPI ReadModbusThread(void *);
 
 	//工作函数
-	const uint32_t Catch();
-	const uint32_t Init();
-	const uint32_t Door();
-	const uint32_t Ptp();
-	const uint32_t Home();
-	const uint32_t Circ();
-	const uint32_t CtrlBrake();
-	const uint32_t CtrlCarmera();
-	const uint32_t CtrlNozzle();
-	const uint32_t CtrlBelt();
+	const uint32_t Catch();//抓取
+	const uint32_t Init();//初始化
+	const uint32_t Door();//门型运动
+	const uint32_t Ptp();//PTP运动
+	const uint32_t Home();//回零
+	const uint32_t Circ();//圆弧运动
+	const uint32_t CtrlBrake();//开关抱闸
+	const uint32_t CtrlCarmera();//开关相机
+	const uint32_t CtrlNozzle();//开关吸嘴
+	const uint32_t CtrlBelt();//启停皮带机
 
 	//ROCKS状态处理函数
 	void StatusHandler(uint32_t &);
